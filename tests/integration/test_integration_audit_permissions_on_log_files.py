@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -28,12 +28,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_permissions_on_log_files_are_configured_pass(setup_to_pass):
-    state = CISAudit().audit_permissions_on_log_files()
+    state = Centos7Audit().audit_permissions_on_log_files()
     assert state == 0
 
 
 def test_integration_audit_permissions_on_log_files_are_configured_fail(setup_to_fail):
-    state = CISAudit().audit_permissions_on_log_files()
+    state = Centos7Audit().audit_permissions_on_log_files()
     assert state == 1
 
 

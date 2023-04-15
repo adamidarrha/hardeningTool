@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -38,12 +38,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_nftables_base_chains_exist_pass(setup_install_nftables):
-    state = CISAudit().audit_nftables_base_chains_exist()
+    state = Centos7Audit().audit_nftables_base_chains_exist()
     assert state == 0
 
 
 def test_integration_audit_nftables_base_chains_exist_fail(setup_install_nftables, setup_to_fail):
-    state = CISAudit().audit_nftables_base_chains_exist()
+    state = Centos7Audit().audit_nftables_base_chains_exist()
     assert state == 7
 
 

@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -39,17 +39,17 @@ def setup_to_pass_2():
 
 
 def test_audit_rsyslog_sends_logs_to_a_remote_log_host_pass_type1(setup_to_pass_1):
-    state = CISAudit().audit_rsyslog_sends_logs_to_a_remote_log_host()
+    state = Centos7Audit().audit_rsyslog_sends_logs_to_a_remote_log_host()
     assert state == 0
 
 
 def test_audit_rsyslog_sends_logs_to_a_remote_log_host_pass_type2(setup_to_pass_2):
-    state = CISAudit().audit_rsyslog_sends_logs_to_a_remote_log_host()
+    state = Centos7Audit().audit_rsyslog_sends_logs_to_a_remote_log_host()
     assert state == 0
 
 
 def test_audit_rsyslog_sends_logs_to_a_remote_log_host_fail():
-    state = CISAudit().audit_rsyslog_sends_logs_to_a_remote_log_host()
+    state = Centos7Audit().audit_rsyslog_sends_logs_to_a_remote_log_host()
     assert state == 1
 
 

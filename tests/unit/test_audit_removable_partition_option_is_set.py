@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_option_set(self, cmd):
@@ -33,17 +33,17 @@ def mock_option_not_set(self, cmd):
 
 
 class TestPartitionOptions:
-    test = CISAudit()
+    test = Centos7Audit()
     test_id = '1.1'
     test_level = 1
     option = 'noexec'
 
-    @patch.object(CISAudit, "_shellexec", mock_option_set)
+    @patch.object(Centos7Audit, "_shellexec", mock_option_set)
     def test_partition_option_is_set(self):
         state = self.test.audit_removable_partition_option_is_set(option=self.option)
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_option_not_set)
+    @patch.object(Centos7Audit, "_shellexec", mock_option_not_set)
     def test_partition_option_is_not_set(self):
         state = self.test.audit_removable_partition_option_is_set(option=self.option)
         assert state == 1

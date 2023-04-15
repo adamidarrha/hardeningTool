@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def test_id_included(caplog):
@@ -13,7 +13,7 @@ def test_id_included(caplog):
     test_id = '1.1'
     test_level = 1
     custom_config = SimpleNamespace(includes=['1.1'], excludes=None, level=0, log_level='DEBUG')
-    test = CISAudit(config=custom_config)
+    test = Centos7Audit(config=custom_config)
 
     result = test._is_test_included(test_id, test_level)
 
@@ -29,7 +29,7 @@ def test_id_not_included(caplog):
     test_id = '1.2'
     test_level = 1
     custom_config = SimpleNamespace(includes=['1.1'], excludes=None, level=0, log_level='DEBUG')
-    test = CISAudit(config=custom_config)
+    test = Centos7Audit(config=custom_config)
 
     result = test._is_test_included(test_id, test_level)
 
@@ -45,7 +45,7 @@ def test_id_excluded(caplog):
     test_id = '1.1'
     test_level = 1
     custom_config = SimpleNamespace(includes=None, excludes=['1.1'], level=0, log_level='DEBUG')
-    test = CISAudit(config=custom_config)
+    test = Centos7Audit(config=custom_config)
 
     result = test._is_test_included(test_id, test_level)
 
@@ -61,7 +61,7 @@ def test_id_not_excluded(caplog):
     test_id = '1.2'
     test_level = 1
     custom_config = SimpleNamespace(includes=None, excludes=['1.1'], level=0, log_level='DEBUG')
-    test = CISAudit(config=custom_config)
+    test = Centos7Audit(config=custom_config)
 
     result = test._is_test_included(test_id=test_id, test_level=test_level)
 
@@ -75,7 +75,7 @@ def test_parent_id_included(caplog):
     test_id = '1.1.1'
     test_level = 1
     custom_config = SimpleNamespace(includes=['1.1'], excludes=None, level=0, log_level='DEBUG')
-    test = CISAudit(config=custom_config)
+    test = Centos7Audit(config=custom_config)
 
     result = test._is_test_included(test_id=test_id, test_level=test_level)
 
@@ -91,7 +91,7 @@ def test_child_id_included(caplog):
     test_id = '1.1'
     test_level = 1
     custom_config = SimpleNamespace(includes=['1.1.1'], excludes=None, level=0, log_level='DEBUG')
-    test = CISAudit(config=custom_config)
+    test = Centos7Audit(config=custom_config)
 
     result = test._is_test_included(test_id=test_id, test_level=test_level)
 
@@ -107,7 +107,7 @@ def test_parent_id_excluded(caplog):
     test_id = '1.1.1'
     test_level = 1
     custom_config = SimpleNamespace(includes=None, excludes=['1.1'], level=0, log_level='DEBUG')
-    test = CISAudit(config=custom_config)
+    test = Centos7Audit(config=custom_config)
 
     result = test._is_test_included(test_id=test_id, test_level=test_level)
 
@@ -123,7 +123,7 @@ def test_level_matches_testing_level(caplog):
     test_id = '1.1'
     test_level = 1
     custom_config = SimpleNamespace(includes=None, excludes=None, level=1, log_level='DEBUG')
-    test = CISAudit(config=custom_config)
+    test = Centos7Audit(config=custom_config)
 
     result = test._is_test_included(test_id=test_id, test_level=test_level)
 
@@ -138,7 +138,7 @@ def test_level_not_matches_testing_level(caplog):
     test_id = '1.1'
     test_level = 2
     custom_config = SimpleNamespace(includes=None, excludes=None, level=1, log_level='DEBUG')
-    test = CISAudit(config=custom_config)
+    test = Centos7Audit(config=custom_config)
 
     result = test._is_test_included(test_id=test_id, test_level=test_level)
 

@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -42,17 +42,17 @@ def setup_to_fail_permissions():
 
 
 def test_integration_audit_cron_is_restricted_to_authorized_users_pass(setup_to_pass):
-    state = CISAudit().audit_cron_is_restricted_to_authorized_users()
+    state = Centos7Audit().audit_cron_is_restricted_to_authorized_users()
     assert state == 0
 
 
 def test_integration_audit_cron_is_restricted_to_authorized_users_fail_exists(setup_to_fail_exists):
-    state = CISAudit().audit_cron_is_restricted_to_authorized_users()
+    state = Centos7Audit().audit_cron_is_restricted_to_authorized_users()
     assert state == 3
 
 
 def test_integration_audit_cron_is_restricted_to_authorized_users_fail_permissions(setup_to_fail_permissions):
-    state = CISAudit().audit_cron_is_restricted_to_authorized_users()
+    state = Centos7Audit().audit_cron_is_restricted_to_authorized_users()
     assert state == 4
 
 

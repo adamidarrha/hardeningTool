@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -19,12 +19,12 @@ def setup_to_pass():
 
 
 def test_integration_audit_journald_configured_to_write_logfiles_to_disk_pass(setup_to_pass):
-    state = CISAudit().audit_journald_configured_to_write_logfiles_to_disk()
+    state = Centos7Audit().audit_journald_configured_to_write_logfiles_to_disk()
     assert state == 0
 
 
 def test_integration_audit_journald_configured_to_write_logfiles_to_disk_fail():
-    state = CISAudit().audit_journald_configured_to_write_logfiles_to_disk()
+    state = Centos7Audit().audit_journald_configured_to_write_logfiles_to_disk()
     assert state == 1
 
 

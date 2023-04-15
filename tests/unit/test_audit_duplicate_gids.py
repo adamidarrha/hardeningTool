@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_duplicate_gids_pass(self, cmd):
@@ -26,13 +26,13 @@ def mock_duplicate_gids_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_duplicate_gids_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_duplicate_gids_pass)
 def test_audit_duplicate_gids_pass():
     state = test.audit_duplicate_gids()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_duplicate_gids_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_duplicate_gids_fail)
 def test_audit_duplicate_gids_fail():
     state = test.audit_duplicate_gids()
     assert state == 1

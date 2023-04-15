@@ -2,9 +2,9 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def test_integration_audit_removable_partition_option_is_set_pass():

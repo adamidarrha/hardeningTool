@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -19,12 +19,12 @@ def setup_to_pass():
 
 
 def test_integration_audit_permissions_on_private_host_key_files_pass(setup_to_pass):
-    state = CISAudit().audit_permissions_on_private_host_key_files()
+    state = Centos7Audit().audit_permissions_on_private_host_key_files()
     assert state == 0
 
 
 def test_integration_audit_permissions_on_private_host_key_files_fail():
-    state = CISAudit().audit_permissions_on_private_host_key_files()
+    state = Centos7Audit().audit_permissions_on_private_host_key_files()
     assert state == 7
 
 

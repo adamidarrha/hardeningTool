@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -20,12 +20,12 @@ def setup_to_fail():
 
 
 def test_integration_iptables_is_flushed_pass():
-    state = CISAudit().audit_iptables_is_flushed()
+    state = Centos7Audit().audit_iptables_is_flushed()
     assert state == 0
 
 
 def test_integration_iptables_is_flushed_fail(setup_to_fail):
-    state = CISAudit().audit_iptables_is_flushed()
+    state = Centos7Audit().audit_iptables_is_flushed()
     assert state == 3
 
 

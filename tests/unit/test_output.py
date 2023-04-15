@@ -3,7 +3,7 @@
 import pytest
 from mock import patch
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 mock_data = [
     ('1', 'section header'),
@@ -15,10 +15,10 @@ def mock_output_function(self, data, separator=None):
     print(data)
 
 
-test = CISAudit()
+test = Centos7Audit()
 
 
-@patch.object(CISAudit, 'output_csv', mock_output_function)
+@patch.object(Centos7Audit, 'output_csv', mock_output_function)
 def test_output_calls_csv_function(capfd):
     test.output(format='csv', data=mock_data)
     stdout, stderr = capfd.readouterr()
@@ -29,7 +29,7 @@ def test_output_calls_csv_function(capfd):
     assert output[1] == str(mock_data)
 
 
-@patch.object(CISAudit, 'output_csv', mock_output_function)
+@patch.object(Centos7Audit, 'output_csv', mock_output_function)
 def test_output_calls_psv_function(capfd):
     test.output(format='psv', data=mock_data)
     stdout, stderr = capfd.readouterr()
@@ -40,7 +40,7 @@ def test_output_calls_psv_function(capfd):
     assert output[1] == str(mock_data)
 
 
-@patch.object(CISAudit, 'output_csv', mock_output_function)
+@patch.object(Centos7Audit, 'output_csv', mock_output_function)
 def test_output_calls_tsv_function(capfd):
     test.output(format='tsv', data=mock_data)
     stdout, stderr = capfd.readouterr()
@@ -51,7 +51,7 @@ def test_output_calls_tsv_function(capfd):
     assert output[1] == str(mock_data)
 
 
-@patch.object(CISAudit, 'output_json', mock_output_function)
+@patch.object(Centos7Audit, 'output_json', mock_output_function)
 def test_output_calls_json_function(capfd):
     test.output(format='json', data=mock_data)
     stdout, stderr = capfd.readouterr()
@@ -62,7 +62,7 @@ def test_output_calls_json_function(capfd):
     assert output[1] == str(mock_data)
 
 
-@patch.object(CISAudit, 'output_text', mock_output_function)
+@patch.object(Centos7Audit, 'output_text', mock_output_function)
 def test_output_calls_text_function(capfd):
     test.output(format='text', data=mock_data)
     stdout, stderr = capfd.readouterr()

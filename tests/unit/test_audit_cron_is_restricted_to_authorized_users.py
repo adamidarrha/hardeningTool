@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_os_path_exists_pass(file):
@@ -27,23 +27,23 @@ def mock_os_path_exists_fail(file):
 
 
 @patch.object(os.path, "exists", mock_os_path_exists_pass)
-@patch.object(CISAudit, "audit_file_permissions", return_value=0)
+@patch.object(Centos7Audit, "audit_file_permissions", return_value=0)
 def test_audit_cron_is_restricted_to_authorized_users_pass(*args):
-    state = CISAudit().audit_cron_is_restricted_to_authorized_users()
+    state = Centos7Audit().audit_cron_is_restricted_to_authorized_users()
     assert state == 0
 
 
 @patch.object(os.path, "exists", mock_os_path_exists_fail)
-@patch.object(CISAudit, "audit_file_permissions", return_value=1)
+@patch.object(Centos7Audit, "audit_file_permissions", return_value=1)
 def test_audit_cron_is_restricted_to_authorized_users_fail_exists(*args):
-    state = CISAudit().audit_cron_is_restricted_to_authorized_users()
+    state = Centos7Audit().audit_cron_is_restricted_to_authorized_users()
     assert state == 3
 
 
 @patch.object(os.path, "exists", return_value=True)
-@patch.object(CISAudit, "audit_file_permissions", return_value=1)
+@patch.object(Centos7Audit, "audit_file_permissions", return_value=1)
 def test_audit_cron_is_restricted_to_authorized_users_fail_permissions(*args):
-    state = CISAudit().audit_cron_is_restricted_to_authorized_users()
+    state = Centos7Audit().audit_cron_is_restricted_to_authorized_users()
     assert state == 5
 
 

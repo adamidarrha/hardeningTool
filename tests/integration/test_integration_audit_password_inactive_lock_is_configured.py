@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -25,12 +25,12 @@ def setup_to_pass():
 
 
 def test_integration_audit_password_inactive_lock_is_configured_pass(setup_to_pass):
-    state = CISAudit().audit_password_inactive_lock_is_configured()
+    state = Centos7Audit().audit_password_inactive_lock_is_configured()
     assert state == 0
 
 
 def test_integration_audit_password_inactive_lock_is_configured_pass_fail():
-    state = CISAudit().audit_password_inactive_lock_is_configured()
+    state = Centos7Audit().audit_password_inactive_lock_is_configured()
     assert state == 3
 
 

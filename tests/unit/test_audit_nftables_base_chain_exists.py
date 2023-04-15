@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_nftables_base_chains_exist_pass(self, cmd):
@@ -88,29 +88,29 @@ def mock_nftables_base_chains_exist_fail_all(self, cmd):
 
 
 class TestNFTablesBaseChainsExist:
-    test = CISAudit()
+    test = Centos7Audit()
 
-    @patch.object(CISAudit, "_shellexec", mock_nftables_base_chains_exist_pass)
+    @patch.object(Centos7Audit, "_shellexec", mock_nftables_base_chains_exist_pass)
     def test_audit_nftables_base_chains_exist_pass(self):
         state = self.test.audit_nftables_base_chains_exist()
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_nftables_base_chains_exist_fail_input)
+    @patch.object(Centos7Audit, "_shellexec", mock_nftables_base_chains_exist_fail_input)
     def test_audit_nftables_base_chains_exist_fail_input(self):
         state = self.test.audit_nftables_base_chains_exist()
         assert state == 1
 
-    @patch.object(CISAudit, "_shellexec", mock_nftables_base_chains_exist_fail_forward)
+    @patch.object(Centos7Audit, "_shellexec", mock_nftables_base_chains_exist_fail_forward)
     def test_audit_nftables_base_chains_exist_fail_forward(self):
         state = self.test.audit_nftables_base_chains_exist()
         assert state == 2
 
-    @patch.object(CISAudit, "_shellexec", mock_nftables_base_chains_exist_fail_output)
+    @patch.object(Centos7Audit, "_shellexec", mock_nftables_base_chains_exist_fail_output)
     def test_audit_nftables_base_chains_exist_fail_output(self):
         state = self.test.audit_nftables_base_chains_exist()
         assert state == 4
 
-    @patch.object(CISAudit, "_shellexec", mock_nftables_base_chains_exist_fail_all)
+    @patch.object(Centos7Audit, "_shellexec", mock_nftables_base_chains_exist_fail_all)
     def test_audit_nftables_base_chains_exist_fail_all(self):
         state = self.test.audit_nftables_base_chains_exist()
         assert state == 7

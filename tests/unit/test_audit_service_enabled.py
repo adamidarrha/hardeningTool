@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_disabled(*args, **kwargs):
@@ -25,16 +25,16 @@ def mock_enabled(*args, **kwargs):
 
 
 class TestService:
-    test = CISAudit()
+    test = Centos7Audit()
     test_id = '1.1'
     test_service = 'pytest'
 
-    @patch.object(CISAudit, "_shellexec", mock_enabled)
+    @patch.object(Centos7Audit, "_shellexec", mock_enabled)
     def test_service_enabled_pass(self):
         state = self.test.audit_service_is_enabled(service=self.test_service)
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_disabled)
+    @patch.object(Centos7Audit, "_shellexec", mock_disabled)
     def test_service_enabled_fail(self):
         state = self.test.audit_service_is_enabled(service=self.test_service)
         assert state == 1

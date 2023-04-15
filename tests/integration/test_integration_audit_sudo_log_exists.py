@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 @pytest.fixture
@@ -20,12 +20,12 @@ def setup_to_pass():
 
 
 def test_integration_audit_sudo_log_exists_pass(setup_to_pass):
-    state = CISAudit().audit_sudo_log_exists()
+    state = Centos7Audit().audit_sudo_log_exists()
     assert state == 0
 
 
 def test_integration_audit_sudo_log_exists_fail():
-    state = CISAudit().audit_sudo_log_exists()
+    state = Centos7Audit().audit_sudo_log_exists()
     assert state == 1
 
 

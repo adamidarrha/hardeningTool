@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_nftables_default_deny_policy_pass(self, cmd):
@@ -33,15 +33,15 @@ def mock_nftables_default_deny_policy_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_nftables_default_deny_policy_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_nftables_default_deny_policy_pass)
 def test_audit_nftables_default_deny_policy_pass():
-    state = CISAudit().audit_nftables_default_deny_policy()
+    state = Centos7Audit().audit_nftables_default_deny_policy()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_nftables_default_deny_policy_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_nftables_default_deny_policy_fail)
 def test_audit_nftables_default_deny_policy_fail():
-    state = CISAudit().audit_nftables_default_deny_policy()
+    state = Centos7Audit().audit_nftables_default_deny_policy()
     assert state == 7
 
 

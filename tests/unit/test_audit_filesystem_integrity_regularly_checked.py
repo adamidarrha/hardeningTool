@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_filesystem_integrity_pass_cron(self, cmd):
@@ -45,21 +45,21 @@ def mock_filesystem_integrity_error(self, cmd):
     raise Exception
 
 
-@patch.object(CISAudit, "_shellexec", mock_filesystem_integrity_pass_cron)
+@patch.object(Centos7Audit, "_shellexec", mock_filesystem_integrity_pass_cron)
 def test_filesystem_integrity_pass_crond():
-    state = CISAudit().audit_filesystem_integrity_regularly_checked()
+    state = Centos7Audit().audit_filesystem_integrity_regularly_checked()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_filesystem_integrity_pass_systemd)
+@patch.object(Centos7Audit, "_shellexec", mock_filesystem_integrity_pass_systemd)
 def test_filesystem_integrity_pass_systemd():
-    state = CISAudit().audit_filesystem_integrity_regularly_checked()
+    state = Centos7Audit().audit_filesystem_integrity_regularly_checked()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_filesystem_integrity_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_filesystem_integrity_fail)
 def test_filesystem_integrity_fail():
-    state = CISAudit().audit_filesystem_integrity_regularly_checked()
+    state = Centos7Audit().audit_filesystem_integrity_regularly_checked()
     assert state == 1
 
 

@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -28,12 +28,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_nxdx_support_enabled_pass():
-    state = CISAudit().audit_nxdx_support_enabled()
+    state = Centos7Audit().audit_nxdx_support_enabled()
     assert state == 0
 
 
 def test_integration_audit_nxdx_support_enabled_fail(setup_to_fail):
-    state = CISAudit().audit_nxdx_support_enabled()
+    state = Centos7Audit().audit_nxdx_support_enabled()
     assert state == 1
 
 

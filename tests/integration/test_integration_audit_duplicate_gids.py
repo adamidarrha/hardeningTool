@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -22,12 +22,12 @@ def setup_to_fail():
 
 
 def test_audit_duplicate_gids_pass():
-    state = CISAudit().audit_duplicate_gids()
+    state = Centos7Audit().audit_duplicate_gids()
     assert state == 0
 
 
 def test_audit_duplicate_gids_fail(setup_to_fail):
-    state = CISAudit().audit_duplicate_gids()
+    state = Centos7Audit().audit_duplicate_gids()
     assert state == 1
 
 

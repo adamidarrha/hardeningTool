@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -21,12 +21,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_root_is_only_uid_0_account_pass():
-    state = CISAudit().audit_root_is_only_uid_0_account()
+    state = Centos7Audit().audit_root_is_only_uid_0_account()
     assert state == 0
 
 
 def test_integration_audit_root_is_only_uid_0_account_fail(setup_to_fail):
-    state = CISAudit().audit_root_is_only_uid_0_account()
+    state = Centos7Audit().audit_root_is_only_uid_0_account()
     assert state == 1
 
 

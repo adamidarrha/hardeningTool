@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_unconfined_services_pass(self, cmd):
@@ -24,15 +24,15 @@ def mock_unconfined_services_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_unconfined_services_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_unconfined_services_pass)
 def test_no_unconfined_services_pass():
-    state = CISAudit().audit_no_unconfined_services()
+    state = Centos7Audit().audit_no_unconfined_services()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_unconfined_services_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_unconfined_services_fail)
 def test_no_unconfined_services_fail():
-    state = CISAudit().audit_no_unconfined_services()
+    state = Centos7Audit().audit_no_unconfined_services()
     assert state == 1
 
 

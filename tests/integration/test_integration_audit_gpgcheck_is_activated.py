@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -35,17 +35,17 @@ def setup_to_fail_repo_file():
 
 
 def test_integration_audit_gpgcheck_is_activated_pass():
-    state = CISAudit().audit_gpgcheck_is_activated()
+    state = Centos7Audit().audit_gpgcheck_is_activated()
     assert state == 0
 
 
 def test_integration_audit_gpgcheck_is_activated_fail_state_1(setup_to_fail_yum_conf):
-    state = CISAudit().audit_gpgcheck_is_activated()
+    state = Centos7Audit().audit_gpgcheck_is_activated()
     assert state == 1
 
 
 def test_integration_audit_gpgcheck_is_activated_fail_state_2(setup_to_fail_repo_file):
-    state = CISAudit().audit_gpgcheck_is_activated()
+    state = Centos7Audit().audit_gpgcheck_is_activated()
     assert state == 2
 
 

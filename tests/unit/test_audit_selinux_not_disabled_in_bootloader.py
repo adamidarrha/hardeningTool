@@ -8,7 +8,7 @@ import pytest
 
 import cis_audit
 
-test = cis_audit.CISAudit()
+test = cis_audit.Centos7Audit()
 
 
 def mock_shellexec_pass(self, cmd):
@@ -72,21 +72,21 @@ def mock_os_walk_no_match(top, topdown=True, onerror=None, followlinks=False):
 
 
 @patch.object(os, "walk", mock_os_walk)
-@patch.object(cis_audit.CISAudit, "_shellexec", mock_shellexec_pass)
+@patch.object(cis_audit.Centos7Audit, "_shellexec", mock_shellexec_pass)
 def test_audit_selinux_not_disabled_in_bootloader_pass():
     state = test.audit_selinux_not_disabled_in_bootloader()
     assert state == 0
 
 
 @patch.object(os, "walk", mock_os_walk)
-@patch.object(cis_audit.CISAudit, "_shellexec", mock_shellexec_fail)
+@patch.object(cis_audit.Centos7Audit, "_shellexec", mock_shellexec_fail)
 def test_audit_selinux_not_disabled_in_bootloader_fail():
     state = test.audit_selinux_not_disabled_in_bootloader()
     assert state == 2
 
 
 @patch.object(os, "walk", mock_os_walk_no_match)
-@patch.object(cis_audit.CISAudit, "_shellexec", mock_shellexec_fail)
+@patch.object(cis_audit.Centos7Audit, "_shellexec", mock_shellexec_fail)
 def test_audit_selinux_not_disabled_in_bootloader_fail_no_match():
     state = test.audit_selinux_not_disabled_in_bootloader()
     assert state == -1

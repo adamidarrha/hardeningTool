@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -33,17 +33,17 @@ def setup_to_error():
 
 
 def test_integration_audit_sshd_config_option_error(setup_to_error):
-    state = CISAudit().audit_sshd_config_option(parameter='x11forwarding', expected_value='yes')
+    state = Centos7Audit().audit_sshd_config_option(parameter='x11forwarding', expected_value='yes')
     assert state == 1
 
 
 def test_integration_audit_sshd_config_option_pass_x11forwarding_yes():
-    state = CISAudit().audit_sshd_config_option(parameter='x11forwarding', expected_value='yes')
+    state = Centos7Audit().audit_sshd_config_option(parameter='x11forwarding', expected_value='yes')
     assert state == 0
 
 
 def test_integration_audit_sshd_config_option_fail_x11forwarding_no():
-    state = CISAudit().audit_sshd_config_option(parameter='x11forwarding', expected_value='no')
+    state = Centos7Audit().audit_sshd_config_option(parameter='x11forwarding', expected_value='no')
     assert state == 2
 
 
@@ -71,13 +71,13 @@ maxauthtries_fail_params = [
 
 @pytest.mark.parametrize("comparison, expected_value", maxauthtries_pass_params)
 def test_integration_audit_sshd_config_option_pass_maxauthtries(setup_sshd_config, expected_value, comparison):
-    state = CISAudit().audit_sshd_config_option(parameter="maxauthtries", expected_value=expected_value, comparison=comparison)
+    state = Centos7Audit().audit_sshd_config_option(parameter="maxauthtries", expected_value=expected_value, comparison=comparison)
     assert state == 0
 
 
 @pytest.mark.parametrize("comparison, expected_value", maxauthtries_fail_params)
 def test_integration_audit_sshd_config_option_fail_maxauthtries(setup_sshd_config, expected_value, comparison):
-    state = CISAudit().audit_sshd_config_option(parameter="maxauthtries", expected_value=expected_value, comparison=comparison)
+    state = Centos7Audit().audit_sshd_config_option(parameter="maxauthtries", expected_value=expected_value, comparison=comparison)
     assert state == 2
 
 

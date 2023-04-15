@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -33,12 +33,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_chrony_is_configured_pass():
-    state = CISAudit().audit_chrony_is_configured()
+    state = Centos7Audit().audit_chrony_is_configured()
     assert state == 0
 
 
 def test_integration_audit_chrony_is_configured_fail(setup_to_fail):
-    state = CISAudit().audit_chrony_is_configured()
+    state = Centos7Audit().audit_chrony_is_configured()
     assert state == 15
 
 

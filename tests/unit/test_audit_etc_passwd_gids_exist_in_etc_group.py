@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_gids_in_passwd_pass(self, cmd):
@@ -34,16 +34,16 @@ def mock_gids_in_passwd_fail(self, cmd):
     return SimpleNamespace(stdout=output, stderr=error, returncode=returncode)
 
 
-test = CISAudit()
+test = Centos7Audit()
 
 
-@patch.object(CISAudit, "_shellexec", mock_gids_in_passwd_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_gids_in_passwd_pass)
 def test_gids_from_etcpasswd_are_in_etcgroup_pass():
     state = test.audit_etc_passwd_gids_exist_in_etc_group()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_gids_in_passwd_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_gids_in_passwd_fail)
 def test_gids_from_etcpasswd_are_in_etcgroup_fail():
     state = test.audit_etc_passwd_gids_exist_in_etc_group()
     assert state == 1

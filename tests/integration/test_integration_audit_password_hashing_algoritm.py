@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -25,12 +25,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_password_hashing_algorithm_pass():
-    state = CISAudit().audit_password_hashing_algorithm()
+    state = Centos7Audit().audit_password_hashing_algorithm()
     assert state == 0
 
 
 def test_integration_audit_password_hashing_algorithm_fail(setup_to_fail):
-    state = CISAudit().audit_password_hashing_algorithm()
+    state = Centos7Audit().audit_password_hashing_algorithm()
     assert state == 1
 
 

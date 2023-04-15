@@ -2,9 +2,9 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def test_integration__shellexec_pass_stdout():

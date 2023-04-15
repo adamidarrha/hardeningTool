@@ -4,7 +4,7 @@ import pytest
 
 import cis_audit
 
-test = cis_audit.CISAudit()
+test = cis_audit.Centos7Audit()
 
 
 if __name__ == '__main__':

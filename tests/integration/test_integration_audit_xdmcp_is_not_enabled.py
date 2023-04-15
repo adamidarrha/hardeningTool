@@ -2,10 +2,10 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 @pytest.fixture

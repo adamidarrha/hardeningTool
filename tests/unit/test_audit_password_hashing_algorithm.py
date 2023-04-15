@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_password_hashing_algorithm_pass(*args):
@@ -40,19 +40,19 @@ def mock_password_hashing_algorithm_fail(*args):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_password_hashing_algorithm_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_password_hashing_algorithm_pass)
 def test_audit_password_hashing_algorithm_pass():
     state = test.audit_password_hashing_algorithm()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_password_hashing_algorithm_pass_regression1)
+@patch.object(Centos7Audit, "_shellexec", mock_password_hashing_algorithm_pass_regression1)
 def test_audit_password_hashing_algorithm_pass_regression1():
     state = test.audit_password_hashing_algorithm()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_password_hashing_algorithm_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_password_hashing_algorithm_fail)
 def test_audit_password_hashing_algorithm_pass_fail_empty():
     state = test.audit_password_hashing_algorithm()
     assert state == 1

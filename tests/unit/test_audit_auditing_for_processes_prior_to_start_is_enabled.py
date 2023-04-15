@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_auditing_for_processes_prior_to_start_is_enabled_pass_efidir(self, cmd):
@@ -48,22 +48,22 @@ def mock_auditing_for_processes_prior_to_start_is_enabled_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-test = CISAudit()
+test = Centos7Audit()
 
 
-@patch.object(CISAudit, "_shellexec", mock_auditing_for_processes_prior_to_start_is_enabled_pass_efidir)
+@patch.object(Centos7Audit, "_shellexec", mock_auditing_for_processes_prior_to_start_is_enabled_pass_efidir)
 def test_audit_auditing_for_processes_prior_to_start_is_enabled_pass_efidir():
     state = test.audit_auditing_for_processes_prior_to_start_is_enabled()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_auditing_for_processes_prior_to_start_is_enabled_pass_grubdir)
+@patch.object(Centos7Audit, "_shellexec", mock_auditing_for_processes_prior_to_start_is_enabled_pass_grubdir)
 def test_audit_auditing_for_processes_prior_to_start_is_enabled_pass_grubdir():
     state = test.audit_auditing_for_processes_prior_to_start_is_enabled()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_auditing_for_processes_prior_to_start_is_enabled_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_auditing_for_processes_prior_to_start_is_enabled_fail)
 def test_audit_auditing_for_processes_prior_to_start_is_enabled_fail():
     state = test.audit_auditing_for_processes_prior_to_start_is_enabled()
     assert state == 1

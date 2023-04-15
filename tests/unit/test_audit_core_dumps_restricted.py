@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_core_dumps_pass(self, cmd):
@@ -30,14 +30,14 @@ def mock_core_dumps_fail(self, cmd):
 
 
 class TestCoreDumpsRestricted:
-    test = CISAudit()
+    test = Centos7Audit()
 
-    @patch.object(CISAudit, "_shellexec", mock_core_dumps_pass)
+    @patch.object(Centos7Audit, "_shellexec", mock_core_dumps_pass)
     def test_mock_core_dumps_pass(self):
         state = self.test.audit_core_dumps_restricted()
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_core_dumps_fail)
+    @patch.object(Centos7Audit, "_shellexec", mock_core_dumps_fail)
     def test_mock_core_dumps_fail(self):
         state = self.test.audit_core_dumps_restricted()
         assert state == 7

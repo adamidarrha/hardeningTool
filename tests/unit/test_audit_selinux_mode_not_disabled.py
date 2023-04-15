@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_selinux_mode_not_disabled_enforcing(self, cmd):
@@ -33,20 +33,20 @@ def mock_selinux_mode_not_disabled_disabled(self, cmd):
 
 
 class TestSELinuxNotDisabled:
-    test = CISAudit()
+    test = Centos7Audit()
     test_id = '1.1'
 
-    @patch.object(CISAudit, "_shellexec", mock_selinux_mode_not_disabled_enforcing)
+    @patch.object(Centos7Audit, "_shellexec", mock_selinux_mode_not_disabled_enforcing)
     def test_selinux_not_disabled_enforcing_pass(self):
         state = self.test.audit_selinux_mode_not_disabled()
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_selinux_mode_not_disabled_permissive)
+    @patch.object(Centos7Audit, "_shellexec", mock_selinux_mode_not_disabled_permissive)
     def test_selinux_not_disabled_permissive_pass(self):
         state = self.test.audit_selinux_mode_not_disabled()
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_selinux_mode_not_disabled_disabled)
+    @patch.object(Centos7Audit, "_shellexec", mock_selinux_mode_not_disabled_disabled)
     def test_selinux_not_disabled_disabled_fail(self):
         state = self.test.audit_selinux_mode_not_disabled()
         assert state == 3

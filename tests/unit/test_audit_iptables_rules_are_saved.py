@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_iptables_rules_are_saved_pass(self, cmd):
@@ -61,30 +61,30 @@ def mock_iptables_rules_are_saved_fail_ipv6(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 ## IPv4
-@patch.object(CISAudit, "_shellexec", mock_iptables_rules_are_saved_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_rules_are_saved_pass)
 def test_audit_iptables_rules_are_saved_pass():
     state = test.audit_iptables_rules_are_saved(ip_version='ipv4')
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_rules_are_saved_fail_ipv4)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_rules_are_saved_fail_ipv4)
 def test_audit_iptables_rules_are_saved_fail():
     state = test.audit_iptables_rules_are_saved(ip_version='ipv4')
     assert state == 1
 
 
 ## IPv6
-@patch.object(CISAudit, "_shellexec", mock_iptables_rules_are_saved_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_rules_are_saved_pass)
 def test_audit_ip6tables_rules_are_saved_pass():
     state = test.audit_iptables_rules_are_saved(ip_version='ipv6')
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_rules_are_saved_fail_ipv6)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_rules_are_saved_fail_ipv6)
 def test_audit_ip6tables_rules_are_saved_fail():
     state = test.audit_iptables_rules_are_saved(ip_version='ipv6')
     assert state == 1

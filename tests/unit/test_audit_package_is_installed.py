@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_package_installed(*args):
@@ -32,23 +32,23 @@ def mock_package_error(self, cmd):
     return SimpleNamespace(stdout=output, stderr=error, returncode=returncode)
 
 
-test = CISAudit()
+test = Centos7Audit()
 package = 'pytest'
 
 
-@patch.object(CISAudit, "_shellexec", mock_package_installed)
+@patch.object(Centos7Audit, "_shellexec", mock_package_installed)
 def test_packages_are_installed_pass():
     state = test.audit_package_is_installed(package='pytest')
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_package_not_installed)
+@patch.object(Centos7Audit, "_shellexec", mock_package_not_installed)
 def test_packages_are_installed_fail():
     state = test.audit_package_is_installed(package='pytest')
     assert state == 1
 
 
-@patch.object(CISAudit, "_shellexec", mock_package_error)
+@patch.object(Centos7Audit, "_shellexec", mock_package_error)
 def test_packages_are_installed_error():
     state = test.audit_package_is_installed(package='pytest')
     assert state == 1

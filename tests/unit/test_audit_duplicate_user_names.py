@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_duplicate_user_names_pass(self, cmd):
@@ -26,13 +26,13 @@ def mock_duplicate_user_names_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_duplicate_user_names_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_duplicate_user_names_pass)
 def test_audit_duplicate_user_names_pass():
     state = test.audit_duplicate_user_names()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_duplicate_user_names_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_duplicate_user_names_fail)
 def test_audit_duplicate_user_names_fail():
     state = test.audit_duplicate_user_names()
     assert state == 1

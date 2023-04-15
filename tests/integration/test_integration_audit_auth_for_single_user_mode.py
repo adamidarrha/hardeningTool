@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -24,12 +24,12 @@ def setup_to_fail():
 
 
 def test_integrate_auth_for_single_user_mode_pass():
-    state = CISAudit().audit_auth_for_single_user_mode()
+    state = Centos7Audit().audit_auth_for_single_user_mode()
     assert state == 0
 
 
 def test_integrate_auth_for_single_user_mode_fail(setup_to_fail):
-    state = CISAudit().audit_auth_for_single_user_mode()
+    state = Centos7Audit().audit_auth_for_single_user_mode()
     assert state == 3
 
 

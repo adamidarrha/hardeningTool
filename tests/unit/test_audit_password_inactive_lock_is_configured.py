@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_password_inactive_lock_is_configured_pass(self, cmd):
@@ -55,19 +55,19 @@ def mock_password_inactive_lock_is_configured_fail_disabled(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_password_inactive_lock_is_configured_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_password_inactive_lock_is_configured_pass)
 def test_audit_password_inactive_lock_is_configured_pass():
     state = test.audit_password_inactive_lock_is_configured()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_password_inactive_lock_is_configured_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_password_inactive_lock_is_configured_fail)
 def test_audit_password_inactive_lock_is_configured_fail():
     state = test.audit_password_inactive_lock_is_configured()
     assert state == 3
 
 
-@patch.object(CISAudit, "_shellexec", mock_password_inactive_lock_is_configured_fail_disabled)
+@patch.object(Centos7Audit, "_shellexec", mock_password_inactive_lock_is_configured_fail_disabled)
 def test_audit_password_inactive_lock_is_configured_fail_disabled():
     state = test.audit_password_inactive_lock_is_configured()
     assert state == 3

@@ -9,8 +9,6 @@
 # You can obtain a copy of the CIS Benchmarks from https://www.cisecurity.org/cis-benchmarks/
 # Use of the CIS Benchmarks are subject to the Terms of Use for Non-Member CIS Products - https://www.cisecurity.org/terms-of-use-for-non-member-cis-products
 
-__version__ = '0.20.0-alpha.3'
-
 ### Imports ###
 import json  # https://docs.python.org/3/library/json.html
 import logging  # https://docs.python.org/3/library/logging.html
@@ -19,13 +17,6 @@ import pdb  # noqa https://docs.python.org/3/library/pdb.html
 import re  # https://docs.python.org/3/library/re.html
 import stat  # https://docs.python.org/3/library/stat.html
 import subprocess  # https://docs.python.org/3/library/subprocess.html
-import sys  # https://docs.python.org/3/library/sys.html
-from argparse import (
-    ArgumentParser,  # https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser
-)
-from argparse import (
-    RawTextHelpFormatter,  # https://docs.python.org/3/library/argparse.html#argparse.RawTextHelpFormatter
-)
 from datetime import (
     datetime,  # https://docs.python.org/3/library/datetime.html#datetime.datetime
 )
@@ -35,7 +26,6 @@ from types import (
     SimpleNamespace,  # https://docs.python.org/3/library/types.html#types.SimpleNamespace
 )
 from typing import Generator
-
 from tests.integration import (
     shellexec,  # https://docs.python.org/3/library/typing.html#typing.Generator
 )
@@ -43,7 +33,7 @@ from tests.integration import (
 
 ### Classes ###
 class CISAudit:
-    def __init__(self, config=None):
+    def __init__(self, config):
         if config:
             self.config = config
         else:
@@ -56,6 +46,213 @@ class CISAudit:
 
         self.log = logging.getLogger(__name__)
         self.log.setLevel(self.config.log_level)
+    
+    def output(self, format: str, data: list) -> None:
+        if format in ['csv', 'psv', 'tsv']:
+            if format == 'csv':
+                sep = ','
+            elif format == 'psv':
+                sep = '|'
+            elif format == 'tsv':
+                sep = '\t'
+
+            self.output_csv(data, separator=sep)
+
+        elif format == 'json':
+            self.output_json(data)
+
+        elif format == 'text':
+            self.output_text(data)
+
+    def output_csv(self, data: list, separator: str):
+        ## Shorten the variable name so that it's easier to construct the print's below
+        sep = separator
+
+        ## Print Header
+        print(f'ID{sep}Description{sep}Level{sep}Result{sep}Duration')
+
+        ## Print Data
+        for record in data:
+            if len(record) == 2:
+                print(f'{record[0]}{sep}"{record[1]}"{sep}{sep}{sep}')
+            elif len(record) == 4:
+                print(f'{record[0]}{sep}"{record[1]}"{sep}{record[2]}{sep}{record[3]}{sep}')
+            elif len(record) == 5:
+                print(f'{record[0]}{sep}"{record[1]}"{sep}{record[2]}{sep}{record[3]}{sep}{record[4]}')
+
+    def output_json(self, data):
+        output = {}
+
+        for record in data:
+            id = record[0]
+            output[id] = {}
+            output[id]['description'] = record[1]
+
+            if len(record) >= 3:
+                output[id]['level'] = record[2]
+
+            if len(record) >= 4:
+                output[id]['result'] = record[3]
+
+            if len(record) >= 5:
+                output[id]['duration'] = record[4]
+
+        print(json.dumps(output))
+
+    def output_text(self, data):
+        ## Set starting/minimum width of columns to fit the column headers
+        width_id = len("ID")
+        width_description = len("Description")
+        width_level = len("Level")
+        width_result = len("Result")
+        width_duration = len("Duration")
+
+        ## Find the max width of each column
+        for row in data:
+            row_length = len(row)
+
+            ## In the following section, len_level and len_duration are commented out because the
+            ## headers are wider than the data in the rows, so they currently don't need expanding.
+            ## If I leave them uncommented, then codecov complains about the tests not covering them.
+
+            len_id = len(str(row[0])) if row_length >= 1 else None
+            len_description = len(str(row[1])) if row_length >= 2 else None
+            # len_level = len(str(row[2])) if row_length >= 3 else None
+            len_result = len(str(row[3])) if row_length >= 4 else None
+            # len_duration = len(str(row[4])) if row_length >= 5 else None
+
+            if len_id and len_id > width_id:
+                width_id = len_id
+                # print(f'Width for ID expanded to {width_id}')
+
+            if len_description and len_description > width_description:
+                width_description = len_description
+
+            # if len_level and len_level > width_level:
+            #    width_level = len_level
+
+            if len_result and len_result > width_result:
+                width_result = len_result
+
+            # if len_duration and len_duration > width_duration:
+            #    width_duration = len_duration
+
+        ## Print column headers
+        print(f'{"ID" : <{width_id}}  {"Description" : <{width_description}}  {"Level" : ^{width_level}}  {"Result" : ^{width_result}}  {"Duration" : >{width_duration}}')
+        print(f'{"--" :-<{width_id}}  {"-----------" :-<{width_description}}  {"-----" :-^{width_level}}  {"------" :-^{width_result}}  {"--------" :->{width_duration}}')
+
+        ## Print Data
+        for row in data:
+            id = row[0] if len(row) >= 1 else ""
+            description = row[1] if len(row) >= 2 else ""
+            level = row[2] if len(row) >= 3 else ""
+            result = row[3] if len(row) >= 4 else ""
+            duration = row[4] if len(row) >= 5 else ""
+
+            ## Print blank row before new major sections
+            if len(id) == 1:
+                print()
+
+            print(f'{id: <{width_id}}  {description: <{width_description}}  {level: ^{width_level}}  {result: ^{width_result}}  {duration: >{width_duration}}')
+
+
+    def run_tests(self, tests: "list[dict]") -> dict:
+        results = []
+
+        for test in tests:
+            result = ""
+
+            ## Test ID
+            test_id = test['_id']
+
+            ## Test Description
+            test_description = test['description']
+
+            ## Test Function
+            if "function" in test:
+                test_function = test['function']
+            else:
+                test_function = None
+
+            ## Test kwargs
+            if 'kwargs' in test:
+                kwargs = test['kwargs']
+            else:
+                kwargs = None
+
+            ## Test Level
+            if "levels" in test:
+                if self.config.system_type in test['levels']:
+                    test_level = test['levels'][self.config.system_type]
+            else:
+                test_level = None
+
+            ## Test Type
+            if "type" in test:
+                test_type = test['type']
+            else:
+                self.log.debug(f'Test {test_id} does not explicitly define a type, so assuming it is a test')
+                test_type = 'test'
+
+            ## If a test doesn't have a function associated with it, we assume it's unimplemented
+            if test_type == 'test' and test_function is None:
+                test_type = 'notimplemented'
+
+            ## Check whether this test_id is included
+            if self._is_test_included(test_id, test_level):
+                if test_type == 'header':
+                    results.append((test_id, test_description))
+
+                elif test_type == 'manual':
+                    results.append((test_id, test_description, test_level, 'Manual'))
+
+                elif test_type == 'skip':
+                    results.append((test_id, test_description, test_level, 'Skipped'))
+
+                elif test_type == 'notimplemented':
+                    results.append((test_id, test_description, test_level, 'Not Implemented'))
+
+                elif test_type == 'test':
+                    start_time = self._get_utcnow()
+
+                    try:
+                        if kwargs:
+                            self.log.debug(f'Requesting test {test_id}, {test_function.__name__} with kwargs: {kwargs}')
+                            state = test_function(self, **kwargs)
+                        else:
+                            self.log.debug(f'Requesting test {test_id}, {test_function.__name__}')
+                            state = test_function(self)
+
+                    except Exception as e:
+                        self.log.warning(f'Test {test_id} encountered an error: "{e}"')
+                        state = -1
+
+                    end_time = self._get_utcnow()
+                    duration = f'{int((end_time.microsecond - start_time.microsecond) / 1000)}ms'
+
+                    if state == 0:
+                        self.log.debug(f'Test {test_id} passed')
+                        result = "Pass"
+                    elif state == -1:
+                        result = "Error"
+                    elif state == -2:
+                        result = "Skipped"
+                    else:
+                        self.log.debug(f'Test {test_id} failed with state {state}')
+                        result = "Fail"
+
+                    results.append((test_id, test_description, test_level, result, duration))
+
+        return results
+
+
+class LinuxIndependentAudit(CISAudit):
+    def __init__(self, config=None):
+        super().__init__(config)
+
+class Centos7Audit(CISAudit):
+    def __init__(self, config=None):
+        super().__init__(config)
 
     def _get_homedirs(self) -> "Generator[str, int, str]":
         cmd = R"awk -F: '($1!~/(halt|sync|shutdown|nfsnobody)/ && $7!~/^(\/usr)?\/sbin\/nologin(\/)?$/ && $7!~/(\/usr)?\/bin\/false(\/)?$/) { print $1,$3,$6 }' /etc/passwd"
@@ -2052,623 +2249,9 @@ class CISAudit:
 
         return state
 
-    def output(self, format: str, data: list) -> None:
-        if format in ['csv', 'psv', 'tsv']:
-            if format == 'csv':
-                sep = ','
-            elif format == 'psv':
-                sep = '|'
-            elif format == 'tsv':
-                sep = '\t'
+    
 
-            self.output_csv(data, separator=sep)
 
-        elif format == 'json':
-            self.output_json(data)
 
-        elif format == 'text':
-            self.output_text(data)
 
-    def output_csv(self, data: list, separator: str):
-        ## Shorten the variable name so that it's easier to construct the print's below
-        sep = separator
 
-        ## Print Header
-        print(f'ID{sep}Description{sep}Level{sep}Result{sep}Duration')
-
-        ## Print Data
-        for record in data:
-            if len(record) == 2:
-                print(f'{record[0]}{sep}"{record[1]}"{sep}{sep}{sep}')
-            elif len(record) == 4:
-                print(f'{record[0]}{sep}"{record[1]}"{sep}{record[2]}{sep}{record[3]}{sep}')
-            elif len(record) == 5:
-                print(f'{record[0]}{sep}"{record[1]}"{sep}{record[2]}{sep}{record[3]}{sep}{record[4]}')
-
-    def output_json(self, data):
-        output = {}
-
-        for record in data:
-            id = record[0]
-            output[id] = {}
-            output[id]['description'] = record[1]
-
-            if len(record) >= 3:
-                output[id]['level'] = record[2]
-
-            if len(record) >= 4:
-                output[id]['result'] = record[3]
-
-            if len(record) >= 5:
-                output[id]['duration'] = record[4]
-
-        print(json.dumps(output))
-
-    def output_text(self, data):
-        ## Set starting/minimum width of columns to fit the column headers
-        width_id = len("ID")
-        width_description = len("Description")
-        width_level = len("Level")
-        width_result = len("Result")
-        width_duration = len("Duration")
-
-        ## Find the max width of each column
-        for row in data:
-            row_length = len(row)
-
-            ## In the following section, len_level and len_duration are commented out because the
-            ## headers are wider than the data in the rows, so they currently don't need expanding.
-            ## If I leave them uncommented, then codecov complains about the tests not covering them.
-
-            len_id = len(str(row[0])) if row_length >= 1 else None
-            len_description = len(str(row[1])) if row_length >= 2 else None
-            # len_level = len(str(row[2])) if row_length >= 3 else None
-            len_result = len(str(row[3])) if row_length >= 4 else None
-            # len_duration = len(str(row[4])) if row_length >= 5 else None
-
-            if len_id and len_id > width_id:
-                width_id = len_id
-                # print(f'Width for ID expanded to {width_id}')
-
-            if len_description and len_description > width_description:
-                width_description = len_description
-
-            # if len_level and len_level > width_level:
-            #    width_level = len_level
-
-            if len_result and len_result > width_result:
-                width_result = len_result
-
-            # if len_duration and len_duration > width_duration:
-            #    width_duration = len_duration
-
-        ## Print column headers
-        print(f'{"ID" : <{width_id}}  {"Description" : <{width_description}}  {"Level" : ^{width_level}}  {"Result" : ^{width_result}}  {"Duration" : >{width_duration}}')
-        print(f'{"--" :-<{width_id}}  {"-----------" :-<{width_description}}  {"-----" :-^{width_level}}  {"------" :-^{width_result}}  {"--------" :->{width_duration}}')
-
-        ## Print Data
-        for row in data:
-            id = row[0] if len(row) >= 1 else ""
-            description = row[1] if len(row) >= 2 else ""
-            level = row[2] if len(row) >= 3 else ""
-            result = row[3] if len(row) >= 4 else ""
-            duration = row[4] if len(row) >= 5 else ""
-
-            ## Print blank row before new major sections
-            if len(id) == 1:
-                print()
-
-            print(f'{id: <{width_id}}  {description: <{width_description}}  {level: ^{width_level}}  {result: ^{width_result}}  {duration: >{width_duration}}')
-
-    def run_tests(self, tests: "list[dict]") -> dict:
-        results = []
-
-        for test in tests:
-            result = ""
-
-            ## Test ID
-            test_id = test['_id']
-
-            ## Test Description
-            test_description = test['description']
-
-            ## Test Function
-            if "function" in test:
-                test_function = test['function']
-            else:
-                test_function = None
-
-            ## Test kwargs
-            if 'kwargs' in test:
-                kwargs = test['kwargs']
-            else:
-                kwargs = None
-
-            ## Test Level
-            if "levels" in test:
-                if self.config.system_type in test['levels']:
-                    test_level = test['levels'][self.config.system_type]
-            else:
-                test_level = None
-
-            ## Test Type
-            if "type" in test:
-                test_type = test['type']
-            else:
-                self.log.debug(f'Test {test_id} does not explicitly define a type, so assuming it is a test')
-                test_type = 'test'
-
-            ## If a test doesn't have a function associated with it, we assume it's unimplemented
-            if test_type == 'test' and test_function is None:
-                test_type = 'notimplemented'
-
-            ## Check whether this test_id is included
-            if self._is_test_included(test_id, test_level):
-                if test_type == 'header':
-                    results.append((test_id, test_description))
-
-                elif test_type == 'manual':
-                    results.append((test_id, test_description, test_level, 'Manual'))
-
-                elif test_type == 'skip':
-                    results.append((test_id, test_description, test_level, 'Skipped'))
-
-                elif test_type == 'notimplemented':
-                    results.append((test_id, test_description, test_level, 'Not Implemented'))
-
-                elif test_type == 'test':
-                    start_time = self._get_utcnow()
-
-                    try:
-                        if kwargs:
-                            self.log.debug(f'Requesting test {test_id}, {test_function.__name__} with kwargs: {kwargs}')
-                            state = test_function(self, **kwargs)
-                        else:
-                            self.log.debug(f'Requesting test {test_id}, {test_function.__name__}')
-                            state = test_function(self)
-
-                    except Exception as e:
-                        self.log.warning(f'Test {test_id} encountered an error: "{e}"')
-                        state = -1
-
-                    end_time = self._get_utcnow()
-                    duration = f'{int((end_time.microsecond - start_time.microsecond) / 1000)}ms'
-
-                    if state == 0:
-                        self.log.debug(f'Test {test_id} passed')
-                        result = "Pass"
-                    elif state == -1:
-                        result = "Error"
-                    elif state == -2:
-                        result = "Skipped"
-                    else:
-                        self.log.debug(f'Test {test_id} failed with state {state}')
-                        result = "Fail"
-
-                    results.append((test_id, test_description, test_level, result, duration))
-
-        return results
-
-
-### Benchmarks ###
-benchmarks = {
-    'centos7': {
-        '3.1.2': [
-            {'_id': "1", 'description': "Initial Setup", 'type': "header"},
-            {'_id': "1.1", 'description': "Filesystem Configuration", 'type': "header"},
-            {'_id': "1.1.1", 'description': "Disable unused filesystems", 'type': "header"},
-            {'_id': "1.1.1.1", 'description': "Ensure mounting of cramfs is disabled", 'function': CISAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'cramfs'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.1.2", 'description': "Ensure mounting of squashfs is disabled", 'function': CISAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'squashfs'}, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "1.1.1.3", 'description': "Ensure mounting of udf is disabled", 'function': CISAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'udf'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.2", 'description': 'Ensure /tmp is configured', 'function': CISAudit.audit_partition_is_separate, 'kwargs': {'partition': '/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.3", 'description': 'Ensure noexec option set on /tmp partition', 'function': CISAudit.audit_partition_option_is_set, 'kwargs': {'option': 'noexec', 'partition': '/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.4", 'description': 'Ensure nodev option set on /tmp partition', 'function': CISAudit.audit_partition_option_is_set, 'kwargs': {'option': 'nodev', 'partition': '/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.5", 'description': 'Ensure nosuid option set on /tmp partition', 'function': CISAudit.audit_partition_option_is_set, 'kwargs': {'option': 'nosuid', 'partition': '/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.6", 'description': 'Ensure /dev/shm is configured', 'function': CISAudit.audit_partition_is_separate, 'kwargs': {'partition': '/dev/shm'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.7", 'description': 'Ensure noexec option set on /dev/shm partition', 'function': CISAudit.audit_partition_option_is_set, 'kwargs': {'option': 'noexec', 'partition': '/dev/shm'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.8", 'description': 'Ensure nodev option set on /dev/shm partition', 'function': CISAudit.audit_partition_option_is_set, 'kwargs': {'option': 'nodev', 'partition': '/dev/shm'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.9", 'description': 'Ensure nosuid option set on /dev/shm partition', 'function': CISAudit.audit_partition_option_is_set, 'kwargs': {'option': 'nosuid', 'partition': '/dev/shm'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.10", 'description': 'Ensure separate partition exists for /var', 'function': CISAudit.audit_partition_is_separate, 'kwargs': {'partition': '/var'}, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "1.1.11", 'description': 'Ensure separate partition exists for /var/tmp', 'function': CISAudit.audit_partition_is_separate, 'kwargs': {'partition': '/var/tmp'}, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "1.1.12", 'description': 'Ensure noexec option set on /var/tmp partition', 'function': CISAudit.audit_partition_option_is_set, 'kwargs': {'option': 'noexec', 'partition': '/var/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.13", 'description': 'Ensure nodev option set on /var/tmp partition', 'function': CISAudit.audit_partition_option_is_set, 'kwargs': {'option': 'nodev', 'partition': '/var/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.14", 'description': 'Ensure nosuid option set on /var/tmp partition', 'function': CISAudit.audit_partition_option_is_set, 'kwargs': {'option': 'nosuid', 'partition': '/var/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.15", 'description': 'Ensure separate partition exists for /var/log', 'function': CISAudit.audit_partition_is_separate, 'kwargs': {'partition': '/var/log'}, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "1.1.16", 'description': 'Ensure separate partition exists for /var/log/audit', 'function': CISAudit.audit_partition_is_separate, 'kwargs': {'partition': '/var/log/audit'}, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "1.1.17", 'description': 'Ensure separate partition exists for /home', 'function': CISAudit.audit_partition_is_separate, 'kwargs': {'partition': '/home'}, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "1.1.18", 'description': 'Ensure nodev option set on /home partition', 'function': CISAudit.audit_partition_option_is_set, 'kwargs': {'option': 'nodev', 'partition': '/home'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.19", 'description': "Ensure noexec option set on removable media partitions", 'function': CISAudit.audit_removable_partition_option_is_set, 'kwargs': {'option': 'noexec'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.20", 'description': "Ensure nodev option set on removable media partitions", 'function': CISAudit.audit_removable_partition_option_is_set, 'kwargs': {'option': 'nodev'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.21", 'description': "Ensure nosuid option set on removable media partitions", 'function': CISAudit.audit_removable_partition_option_is_set, 'kwargs': {'option': 'nosuid'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.1.22", 'description': 'Ensure sticky bit is set on all world-writable directories', 'function': CISAudit.audit_sticky_bit_on_world_writable_dirs, 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-            {'_id': "1.1.23", 'description': "Disable Automounting", 'function': CISAudit.audit_service_is_disabled, 'kwargs': {'service': 'autofs'}, 'levels': {'server': 1, 'workstation': 2}},
-            {'_id': "1.1.24", 'description': "Disable USB Storage", 'function': CISAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'usb-storage'}, 'levels': {'server': 1, 'workstation': 2}},
-            {'_id': "1.2", 'description': "Configure Software Updates", 'type': "header"},
-            {'_id': "1.2.1", 'description': "Ensure GPG keys are configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.2.2", 'description': "Ensure package manager repositories are configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.2.3", 'description': "Ensure gpgcheck is globally activated", 'function': CISAudit.audit_gpgcheck_is_activated, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.3", 'description': "Filesystem Integrity Checking", 'type': "header"},
-            {'_id': "1.3.1", 'description': "Ensure AIDE is installed", 'function': CISAudit.audit_package_is_installed, 'kwargs': {'package': 'aide'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.3.2", 'description': "Ensure filesystem integrity is regularly checked", 'function': CISAudit.audit_filesystem_integrity_regularly_checked, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.4", 'description': "Secure Boot Settings", 'type': "header"},
-            {'_id': "1.4.1", 'description': "Ensure bootloader password is set", 'function': CISAudit.audit_bootloader_password_is_set, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.4.2", 'description': "Ensure permissions on bootloader config are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': '/boot/grub2/grub.cfg', 'expected_user': 'root', 'expected_group': 'root', 'expected_mode': '0600'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.4.3", 'description': "Ensure authentication required for single user mode", 'function': CISAudit.audit_auth_for_single_user_mode, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.5", 'description': "Additional Process Hardening", 'type': "header"},
-            {'_id': "1.5.1", 'description': "Ensure core dumps are restricted", 'function': CISAudit.audit_core_dumps_restricted, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.5.2", 'description': 'Ensure XD/NX support is enabled', 'function': CISAudit.audit_nxdx_support_enabled, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.5.3", 'description': "Ensure address space layout randomization (ASLR) is enabled", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["kernel.randomize_va_space"], 'value': 2}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.5.4", 'description': "Ensure prelink is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'prelink'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.6", 'description': "Mandatory Access Control", 'type': "header"},
-            {'_id': "1.6.1", 'description': "Configure SELinux", 'type': "header"},
-            {'_id': "1.6.1.1", 'description': "Ensure SELinux is installed", 'function': CISAudit.audit_package_is_installed, 'kwargs': {'package': 'libselinux'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.6.1.2", 'description': "Ensure SELinux is not disabled in bootloader configuration", 'function': CISAudit.audit_selinux_not_disabled_in_bootloader, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.6.1.3", 'description': "Ensure SELinux policy is configured", 'function': CISAudit.audit_selinux_policy_is_configured, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.6.1.4", 'description': "Ensure the SELinux mode is enforcing or permissive", 'function': CISAudit.audit_selinux_mode_not_disabled, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.6.1.5", 'description': "Ensure the SELinux mode is enforcing", 'function': CISAudit.audit_selinux_mode_is_enforcing, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "1.6.1.6", 'description': "Ensure no unconfined services exist", 'function': CISAudit.audit_no_unconfined_services, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.6.1.7", 'description': "Ensure SETroubleshoot is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'setroubleshoot'}, 'levels': {'server': 1, 'workstation': None}},
-            {'_id': "1.6.1.8", 'description': 'Ensure the MCS Translation Service (mcstrans) is not installed', 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'mcstrans'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.7", 'description': "Command Line Warning Banners", 'type': "header"},
-            {'_id': "1.7.1", 'description': "Ensure message of the day is configured properly", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.7.2", 'description': "Ensure local login warning banner is configured properly", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.7.3", 'description': "Ensure remote login warning banner is configured properly", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.7.4", 'description': 'Ensure permissions on /etc/motd are conigured', 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': '/etc/motd', 'expected_user': 'root', 'expected_group': 'root', 'expected_mode': '0644'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.7.5", 'description': 'Ensure permissions on /etc/issue are conigured', 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': '/etc/issue', 'expected_user': 'root', 'expected_group': 'root', 'expected_mode': '0644'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.7.6", 'description': 'Ensure permissions on /etc/issue.net are conigured', 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': '/etc/issue.net', 'expected_user': 'root', 'expected_group': 'root', 'expected_mode': '0644'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.8", 'description': "Gnome Display Manager", 'type': "header"},
-            {'_id': "1.8.1", 'description': "Ensure GNOME Display Manager is removed", 'function': CISAudit.audit_package_not_installed, 'levels': {'server': 2, 'workstation': None}, 'kwargs': {'package': 'gdm'}},
-            {'_id': "1.8.2", 'description': "Ensure GDM login banner is configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.8.3", 'description': "Ensure last logged in user display is disabled", 'function': CISAudit.audit_gdm_last_user_logged_in_disabled, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.8.4", 'description': "Ensure XDCMP is not enabled", 'function': CISAudit.audit_xdmcp_not_enabled, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.9", 'description': 'Ensure updates, patches, and additional security software are installed', 'function': CISAudit.audit_updates_installed, 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-            {'_id': "2", 'description': "Services", 'type': "header"},
-            {'_id': "2.1", 'description': "inetd Services", 'type': "header"},
-            {'_id': "2.1.1", 'description': "Ensure xinetd is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'xinetd'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2", 'description': "Special Purpose Services", 'type': "header"},
-            {'_id': "2.2.1", 'description': "Time Synchronization", 'type': "header"},
-            {'_id': "2.2.1.1", 'description': "Ensure time synchronisation is in use", 'function': CISAudit.audit_only_one_package_is_installed, 'kwargs': {'packages': "chrony ntp"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.1.2", 'description': "Ensure chrony is configured", 'function': CISAudit.audit_chrony_is_configured, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.1.3", 'description': "Ensure ntp is configured", 'function': CISAudit.audit_ntp_is_configured, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.2", 'description': 'Ensure X11 Server components are not installed', 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'xorg-x11-server*'}, 'levels': {'server': 1, 'workstation': None}},
-            {'_id': "2.2.3", 'description': "Ensure Avahi Server is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'avahi*'}, 'levels': {'server': 1, 'workstation': 2}},
-            {'_id': "2.2.4", 'description': "Ensure CUPS is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'cups'}, 'levels': {'server': 1, 'workstation': None}},
-            {'_id': "2.2.5", 'description': "Ensure DHCP Server is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'dhcp'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.6", 'description': "Ensure LDAP server is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'openldap-servers'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.7", 'description': "Ensure DNS server is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'bind'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.8", 'description': "Ensure FTP server is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'vsftpd'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.9", 'description': "Ensure HTTP server is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'httpd'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.10", 'description': 'Ensure IMAP and POP3 server is not installed', 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'dovecot'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.11", 'description': "Ensure Samba is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'samba'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.12", 'description': "Ensure HTTP Proxy server is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'squid'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.13", 'description': 'Ensure net-snmp is not installed', 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'net-snmp'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.14", 'description': "Ensure NIS server is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'ypserv'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.15", 'description': 'Ensure telnet-server is not installed', 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'telnet-server'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.16", 'description': 'Ensure mail transfer agent is configured for local-only mode', 'function': CISAudit.audit_mta_is_localhost_only, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.17", 'description': 'Ensure nfs-utils is not installed or the nfs-server service is masked', 'function': CISAudit.audit_package_not_installed_or_service_is_masked, 'kwargs': {'package': "nfsutils", 'service': "nfs-server"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.18", 'description': "Ensure rpcbind is not installed or the rpcbind service is masked", 'function': CISAudit.audit_package_not_installed_or_service_is_masked, 'kwargs': {'package': "rpcbind", 'service': "rpcbind"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.2.19", 'description': "Ensure rsync is not installed or the rsyncd service is masked", 'function': CISAudit.audit_package_not_installed_or_service_is_masked, 'kwargs': {'package': "rsync", 'service': "rsyncd"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.3", 'description': "Service Clients", 'type': "header"},
-            {'_id': "2.3.1", 'description': "Ensure NIS client is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'ypcbind'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.3.2", 'description': "Ensure rsh client is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'rsh'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.3.3", 'description': "Ensure talk client is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'talk'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.3.4", 'description': "Ensure telnet client is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'telnet'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.3.5", 'description': "Ensure LDAP client is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'openldap-clients'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "2.4", 'description': 'Ensure non-essential services are removed or masked', 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-            {'_id': "3", 'description': "Network Configuration", 'type': "header"},
-            {'_id': "3.1", 'description': "Disable unused network protocols and devices", 'type': "header"},
-            {'_id': "3.1.1", 'description': "Disable IPv6", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv6.conf.all.disaable_ipv6", "net.ipv6.conf.default.disable_ipv6"], 'value': 1}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.1.2", 'description': "Ensure wireless interfaces are disabled", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': 'wireless-tools'}, 'levels': {'server': 1, 'workstation': 2}},
-            {'_id': "3.2", 'description': 'Network Parameters (Host Only)', 'type': "header"},
-            {'_id': "3.2.1", 'description': "Ensure IP forwarding is disabled", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.ip_forward", "net.ipv6.conf.all.forwarding", "net.ipv6.conf.default.forwarding"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.2.2", 'description': "Ensure packet redirect sending is disabled", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.send_redirects", "net.ipv4.conf.default.send_redirects"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.3", 'description': "Network Parameters (Host and Router", 'type': "header"},
-            {'_id': "3.3.1", 'description': "Ensure source routed packets are not accepted", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.accept_source_route", "net.ipv4.conf.default.accept_source_route", "net.ipv6.conf.all.accept_source_route", "net.ipv6.conf.default.accept_source_route"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.3.2", 'description': "Ensure ICMP redirects are not accepted", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.accept_redirects", "net.ipv4.conf.default.accept_redirects", "net.ipv6.conf.all.accept_redirects", "net.ipv6.conf.default.accept_redirects"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.3.3", 'description': "Ensure secure ICMP redirects are not accepted", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.secure_redirects", "net.ipv4.conf.default.secure_redirects"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.3.4", 'description': "Ensure suspicious packets are logged", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.log_martians", "net.ipv4.conf.default.log_martians"], 'value': 1}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.3.5", 'description': "Ensure broadcast ICMP requests are ignored", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.icmp_echo_ignore_broadcasts"], 'value': 1}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.3.6", 'description': "Ensure bogus ICMP responses are ignored", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.icmp_ignore_bogus_error_responses"], 'value': 1}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.3.7", 'description': "Ensure Reverse Path Filtering is enabled", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.rp_filter", "net.ipv4.conf.default.rp_filter"], 'value': 1}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.3.8", 'description': "Ensure TCP SYN Cookies is enabled", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.tcp_syncookies"], 'value': 1}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.3.9", 'description': "Ensure IPv6 router advertisments are not accepted", 'function': CISAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv6.conf.all.accept_ra", "net.ipv6.conf.default.accept_ra"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.4", 'description': "Uncommon Network Protocols", 'type': "header"},
-            {'_id': "3.4.1", 'description': "Ensure DCCP is disabled", 'function': CISAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'dccp'}, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "3.4.1", 'description': "Ensure SCTP is disabled", 'function': CISAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'sctp'}, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "3.5", 'description': "Firewall Configuration", 'type': "header"},
-            {'_id': "3.5.1", 'description': "Configure firewalld", 'type': "header"},
-            {'_id': "3.5.1.1", 'description': "Ensure firewalld is installed", 'function': CISAudit.audit_package_is_installed, 'kwargs': {'package': "firewalld"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.1.2", 'description': "Ensure iptables-services not installed with firewalld", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': "iptables-services"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.1.3", 'description': "Ensure nftables not installed with firewalld", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': "nftables"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.1.4", 'description': "Ensure firewalld service enabled and running", 'function': CISAudit.audit_service_is_enabled_and_is_active, 'kwargs': {'service': "firewalld"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.1.5", 'description': "Ensure firewalld default zone is set", 'function': CISAudit.audit_firewalld_default_zone_is_set, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.1.6", 'description': "Ensure network interfaces are assigned to appropriate zone", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-            {'_id': "3.5.1.7", 'description': "Ensure firewalld drops unnecessary services and ports", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-            {'_id': "3.5.2", 'description': "Configure nftables", 'type': "header"},
-            {'_id': "3.5.2.1", 'description': "Ensure nftables is installed", 'function': CISAudit.audit_package_is_installed, 'kwargs': {'package': "nftables"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.2.2", 'description': "Ensure firewalld is not installed", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': "firewalld"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.2.3", 'description': "Ensure iptables-services not installed with nftables", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': "iptables-services"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.2.4", 'description': "Ensure iptables are flushed with nftables", 'function': CISAudit.audit_iptables_is_flushed, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.2.5", 'description': "Ensure an nftables table exists", 'function': CISAudit.audit_nftables_table_exists, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.2.6", 'description': "Ensure nftables base chains exist", 'function': CISAudit.audit_nftables_base_chains_exist, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.2.7", 'description': "Ensure nftables loopback traffic is configured", 'function': CISAudit.audit_nftables_loopback_is_configured, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.2.8", 'description': "Ensure nftables outbound and establishe dconnections are configured", 'function': CISAudit.audit_nftables_outbound_and_established_connections, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.2.9", 'description': "Ensure nftables default deny firewall policy exists", 'function': CISAudit.audit_nftables_default_deny_policy, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.2.10", 'description': "Ensure nftables service is enabled", 'function': CISAudit.audit_service_is_enabled, 'kwargs': {'service': "nftables"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.2.11", 'description': "Ensure nftables rules are permanent", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3", 'description': "Configure iptables", 'type': "header"},
-            {'_id': "3.5.3.1", 'description': "Configure iptables software", 'type': "header"},
-            {'_id': "3.5.3.1.1", 'description': "Ensure iptables-services is installed", 'function': CISAudit.audit_package_is_installed, 'kwargs': {'package': "iptables-services"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.1.2", 'description': "Ensure nftables is not installed with iptables", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': "nftables"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.1.3", 'description': "Ensure firewalld is not installed with iptables", 'function': CISAudit.audit_package_not_installed, 'kwargs': {'package': "firewalld"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.2", 'description': "Configure IPv4 iptables", 'type': "header"},
-            {'_id': "3.5.3.2.1", 'description': "Ensure iptables loopback traffic is configured", 'function': CISAudit.audit_iptables_loopback_is_configured, 'kwargs': {'ip_version': 'ipv4'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.2.2", 'description': "Ensure iptables outbound and established connections are configured", 'function': CISAudit.audit_iptables_outbound_and_established_connections, 'kwargs': {'ip_version': 'ipv4'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.2.2", 'description': "Ensure iptables rules exist for all open ports", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-            {'_id': "3.5.3.2.4", 'description': "Ensure iptables default deny firewall policy", 'function': CISAudit.audit_iptables_default_deny_policy, 'kwargs': {'ip_version': 'ipv4'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.2.5", 'description': "Ensure iptables rules are saved", 'function': CISAudit.audit_iptables_rules_are_saved, 'kwargs': {'ip_version': 'ipv4'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.2.6", 'description': "Ensure iptables is enabled and running", 'function': CISAudit.audit_service_is_enabled_and_is_active, 'kwargs': {'service': 'iptables'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.3", 'description': "Configure IPv6 ip6tables", 'type': "header"},
-            {'_id': "3.5.3.3.1", 'description': "Ensure ip6tables loopback traffic is configured", 'function': CISAudit.audit_iptables_loopback_is_configured, 'kwargs': {'ip_version': 'ipv6'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.3.2", 'description': "Ensure ip6tables outbound and established connections are configured", 'function': CISAudit.audit_iptables_outbound_and_established_connections, 'kwargs': {'ip_version': 'ipv6'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.3.2", 'description': "Ensure ip6tables rules exist for all open ports", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-            {'_id': "3.5.3.3.4", 'description': "Ensure ip6tables default deny firewall policy", 'function': CISAudit.audit_iptables_default_deny_policy, 'kwargs': {'ip_version': 'ipv6'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.3.5", 'description': "Ensure ip6tables rules are saved", 'function': CISAudit.audit_iptables_rules_are_saved, 'kwargs': {'ip_version': 'ipv6'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.5.3.3.6", 'description': "Ensure ip6tables is enabled and running", 'function': CISAudit.audit_service_is_enabled_and_is_active, 'kwargs': {'service': 'ip6tables'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "4", 'description': "Logging and Auditing", 'type': "header"},
-            {'_id': "4.1", 'description': "Configure System Accounting (auditd)", 'type': "header"},
-            {'_id': "4.1.1", 'description': "Ensure auditing is enabled", 'type': "header"},
-            {'_id': "4.1.1.1", 'description': "Ensure auditd is installed", 'function': CISAudit.audit_package_is_installed, 'kwargs': {'package': 'audit'}, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.1.2", 'description': "Ensure auditd service is enabled and running", 'function': CISAudit.audit_service_is_enabled_and_is_active, 'kwargs': {'service': "auditd"}, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.1.3", 'description': "Ensure auditing for processes that start prior to auditd is enabled", 'function': CISAudit.audit_auditing_for_processes_prior_to_start_is_enabled, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.2", 'description': "Configure Data Retention", 'type': "header"},
-            {'_id': "4.1.2.1", 'description': "Ensure audit log storage size is configured", 'function': CISAudit.audit_audit_log_size_is_configured, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.2.2", 'description': "Ensure audit logs are not automatically deleted", 'function': CISAudit.audit_audit_logs_not_automatically_deleted, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.2.3", 'description': "Ensure system is disabled when audit logs are full", 'function': CISAudit.audit_system_is_disabled_when_audit_logs_are_full, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.2.4", 'description': "Ensure audit_backlog_limit is sufficient", 'function': None, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.3", 'description': "Ensure events that modify date and time information are collected", 'function': CISAudit.audit_events_that_modify_datetime_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.4", 'description': "Ensure events that modify user/group information are collected", 'function': CISAudit.audit_events_that_modify_usergroup_info_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.5", 'description': "Ensure events that modify the system's network environment are collected", 'function': CISAudit.audit_events_that_modify_network_environment_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.6", 'description': "Ensure events tat modify the system's Mandatory Access Controls are collected", 'function': CISAudit.audit_events_that_modify_mandatory_access_controls_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.7", 'description': "Ensure login and logout events are collected", 'function': CISAudit.audit_events_for_login_and_logout_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.8", 'description': "Ensure session initiation information is collected", 'function': CISAudit.audit_events_for_discretionary_access_control_changes_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.9", 'description': "Ensure discretionary access control permissions modification events are collected", 'function': CISAudit.audit_events_for_discretionary_access_control_changes_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.10", 'description': "Ensure unsuccessful unauthorized file access attempts are collected", 'function': CISAudit.audit_events_for_unsuccessful_file_access_attempts_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.11", 'description': "Ensure use of privileged commands is collected", 'function': None, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.12", 'description': "Ensure successful file system mounts are collected", 'function': CISAudit.audit_events_for_successful_file_system_mounts_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.13", 'description': "Ensure file deletion events by users are collected", 'function': CISAudit.audit_events_for_file_deletion_by_users_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.14", 'description': "Ensure changes to system administration scope (sudoers) is collected", 'function': CISAudit.audit_events_for_changes_to_sysadmin_scope_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.15", 'description': "Ensure system administrator command executions (sudo)are collected", 'function': CISAudit.audit_events_for_system_administrator_commands_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.16", 'description': "Ensure kernel module loading and unloading is collected", 'function': CISAudit.audit_events_for_kernel_module_loading_and_unloading_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.1.17", 'description': "Ensure the audit configuration is immutable", 'function': CISAudit.audit_audit_config_is_immutable, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "4.2", 'description': "Configure Logging", 'type': "header"},
-            {'_id': "4.2.1", 'description': "Configure rsyslog", 'type': "header"},
-            {'_id': "4.2.1.1", 'description': "Ensure rsyslog is installed", 'function': CISAudit.audit_package_is_installed, 'kwargs': {'package': "rsyslog"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "4.2.1.2", 'description': "Ensure rsyslog service is enabled and running", 'function': CISAudit.audit_service_is_enabled_and_is_active, 'levels': {'server': 1, 'workstation': 1}, 'kwargs': {'service': 'rsyslog'}},
-            {'_id': "4.2.1.3", 'description': "Ensure rsyslog default file permissions configured", 'function': CISAudit.audit_rsyslog_default_file_permission_is_configured, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "4.2.1.4", 'description': "Ensure logging is configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "4.2.1.5", 'description': "Ensure rsyslog is configured to send logs to a remote log host", 'function': CISAudit.audit_rsyslog_sends_logs_to_a_remote_log_host, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "4.2.1.6", 'description': "Ensure remote rsyslog messages are only accepted on designated log hosts", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "4.2.2", 'description': "Configure journald", 'type': "header"},
-            {'_id': "4.2.2.1", 'description': "Ensure journald is configured to send logs to rsyslog", 'function': CISAudit.audit_journald_configured_to_send_logs_to_rsyslog, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "4.2.2.2", 'description': "Ensure journald is configured to compress large log files", 'function': CISAudit.audit_journald_configured_to_compress_large_logs, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "4.2.2.3", 'description': "Ensure journald is configured to write logfiles to persistent disk", 'function': CISAudit.audit_journald_configured_to_write_logfiles_to_disk, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "4.2.3", 'description': "Ensure permissions on all logfiles are configured", 'function': CISAudit.audit_permissions_on_log_files, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "4.2.4", 'description': "Ensure logrotate is configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5", 'description': "Access, Authentication and Authorization", 'type': "header"},
-            {'_id': "5.1", 'description': "Configure time-based job schedulers", 'type': "header"},
-            {'_id': "5.1.1", 'description': "Ensure cron daemon is enabled and running", 'function': CISAudit.audit_service_is_enabled_and_is_active, 'kwargs': {'service': 'crond'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.1.2", 'description': "Ensure permissions on /etc/crontab are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/crontab", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0600"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.1.3", 'description': "Ensure permissions on /etc/cron.hourly are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.hourly", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.1.4", 'description': "Ensure permissions on /etc/cron.daily are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.daily", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.1.5", 'description': "Ensure permissions on /etc/cron.weekly are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.weekly", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.1.6", 'description': "Ensure permissions on /etc/cron.monthly are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.monthly", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.1.7", 'description': "Ensure permissions on /etc/cron.d are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.d", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.1.8", 'description': "Ensure cron is restricted to authorized users", 'function': CISAudit.audit_cron_is_restricted_to_authorized_users, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.1.9", 'description': "Ensure at is restricted to authorized users", 'function': CISAudit.audit_at_is_restricted_to_authorized_users, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.2", 'description': "Configure sudo", 'type': "header"},
-            {'_id': "5.2.1", 'description': "Ensure sudo is installed", 'function': CISAudit.audit_package_is_installed, 'kwargs': {'package': 'sudo'}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.2.2", 'description': "Ensure sudo commands use pty", 'function': CISAudit.audit_sudo_commands_use_pty, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.2.3", 'description': "Ensure sudo log file exists", 'function': CISAudit.audit_sudo_log_exists, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3", 'description': "Configure SSH Server", 'type': "header"},
-            {'_id': "5.3.1", 'description': "Ensure permissions on /etc.ssh/sshd_config are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/ssh/sshd_config", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0600"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.2", 'description': "Ensure permissions on SSH private host key files are configured", 'function': CISAudit.audit_permissions_on_private_host_key_files, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.3", 'description': "Ensure permissions on SSH public host key files are configures", 'function': CISAudit.audit_permissions_on_public_host_key_files, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.4", 'description': "Ensure SSH access is limited", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.5", 'description': "Ensure SSH LogLevel is appropriate", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.6", 'description': "Ensure SSH X11 forwarding is disabled", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "x11forwarding", 'expected_value': "no"}, 'levels': {'server': 2, 'workstation': 1}},
-            {'_id': "5.3.7", 'description': "Ensure SSH MaxAuthTries is set to 4 or less", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "maxauthtries", 'expected_value': "4", 'comparison': "le"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.8", 'description': "Ensure SSH IgnoreRhosts is enabled", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "ignorerhosts", 'expected_value': "yes"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.9", 'description': "Ensure SSH HostbasedAuthentication is disabled", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "hostbasedauthentication", 'expected_value': "no"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.10", 'description': "Ensure SSH root login is disabled", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "permitrootlogin", 'expected_value': "no"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.11", 'description': "Ensure SSH PermitEmptyPasswords is disabled", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "permitemptypasswords", 'expected_value': "no"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.12", 'description': "Ensure SSH PermitUserEnvironment is disabled", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "permituserenvironment", 'expected_value': "no"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.13", 'description': "Ensure only strong Ciphers are used", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.14", 'description': "Ensure only strong MAC algorithms are used", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.15", 'description': "Ensure only strong Key Exchange algorithms are used", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.12", 'description': "Ensure SSH Idle Timeout Interval is configured", 'type': "header"},
-            {'_id': "5.3.12.1", 'description': "Ensure SSH ClientAliveInterval is 900 or less", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "clientaliveinterval", 'expected_value': "900", 'comparison': "le"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.12.2", 'description': "Ensure SSH ClientAliveCountMax is 0", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "clientalivecountmax", 'expected_value': "0"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.17", 'description': "Ensure SSH LoginGraceTime is set to one minute or less", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "logingracetime", 'expected_value': "60", 'comparison': "le"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.18", 'description': "Ensure SSH warning banner is configured", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "banner", 'expected_value': "/etc/issue.net"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.19", 'description': "Ensure SSH PAM is enabled", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "usepam", 'expected_value': "yes"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.20", 'description': "Ensure SSH AllowTcpForwarding is disabled", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "allowtcpforwarding", 'expected_value': "no"}, 'levels': {'server': 2, 'workstation': 2}},
-            {'_id': "5.3.21", 'description': "Ensure SSH MaxStartups is configured", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "maxstartups", 'expected_value': "10:30:60"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.3.22", 'description': "Ensure SSH MaxSessions is limited", 'function': CISAudit.audit_sshd_config_option, 'kwargs': {'parameter': "maxsessions", 'expected_value': "10", 'comparison': "le"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.4", 'description': "Configure PAM", 'type': "header"},
-            {'_id': "5.4.1", 'description': "Ensure password creation requirements are configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.4.2", 'description': "Ensure lockout for failed password attempts is configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.4.3", 'description': "Ensure password hashing algorithm is SHA512", 'function': CISAudit.audit_password_hashing_algorithm, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.4.4", 'description': "Ensure password reuse is limited", 'function': CISAudit.audit_password_reuse_is_limited, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.5", 'description': "User Accounts and Environment", 'type': "header"},
-            {'_id': "5.5.1", 'description': "Set Shadow Password Suite Parameters", 'type': "header"},
-            {'_id': "5.5.1.1", 'description': "Ensure password expiration is 365 days or less", 'function': CISAudit.audit_password_expiration_max_days_is_configured, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.5.1.2", 'description': "Ensure minimum days between password changes is configured", 'function': CISAudit.audit_password_change_minimum_delay, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.5.1.3", 'description': "Ensure password expiration warning days is 7 or more", 'function': CISAudit.audit_password_expiration_warning_is_configured, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.5.1.4", 'description': "Ensure inactive password lock is 30 days or less", 'function': CISAudit.audit_password_inactive_lock_is_configured, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.5.1.5", 'description': "Ensure all users last password change date is in the past", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.5.2", 'description': "Ensure system accounts are secured", 'function': CISAudit.audit_system_accounts_are_secured, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.5.3", 'description': "Ensure default group for the root account is GID 0", 'function': CISAudit.audit_default_group_for_root, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.5.4", 'description': "Ensure default shell timeout is configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.5.5", 'description': "Ensure default user umask is configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.6", 'description': "Ensure root login is restricted to system console", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-            {'_id': "5.7", 'description': "Ensure access to the su command is restricted", 'function': CISAudit.audit_access_to_su_command_is_restricted, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6", 'description': "System Maintenance", 'type': "header"},
-            {'_id': "6.1", 'description': "System File Permissions", 'type': "header"},
-            {'_id': "6.1.1", 'description': "Audit system file permissions", 'levels': {'server': 2, 'workstation': 2}, 'type': "manual"},
-            {'_id': "6.1.2", 'description': "Ensure permissions on /etc/passwd are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/passwd", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0644"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.1.3", 'description': "Ensure permissions on /etc/passwd- are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/passwd-", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0644"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.1.4", 'description': "Ensure permissions on /etc/shadow are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/shadow", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0000"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.1.5", 'description': "Ensure permissions on /etc/shadow- are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/shadow-", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0000"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.1.6", 'description': "Ensure permissions on /etc/gshadow- are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/gshadow-", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0000"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.1.7", 'description': "Ensure permissions on /etc/gshadow are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/gshadow", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0000"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.1.8", 'description': "Ensure permissions on /etc/group are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/group", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0644"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.1.9", 'description': "Ensure permissions on /etc/group- are configured", 'function': CISAudit.audit_file_permissions, 'kwargs': {'file': "/etc/group-", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0644"}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.1.10", 'description': "Ensure no world writable files exist", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.1.11", 'description': "Ensure no unowned files or directories exist", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.1.12", 'description': "Ensure no ungrouped files or directories exist", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.1.13", 'description': "Audit SUID executables", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-            {'_id': "6.1.14", 'description': "Audit SGID executables", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-            {'_id': "6.2", 'description': "User and Group Settings", 'type': "header"},
-            {'_id': "6.2.1", 'description': "Ensure accounts in /etc/passwd use shadowed passwords", 'function': CISAudit.audit_etc_passwd_accounts_use_shadowed_passwords, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.2", 'description': "Ensure /etc/shadow password fields are not empty", 'function': CISAudit.audit_etc_shadow_password_fields_are_not_empty, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.3", 'description': "Ensure all groups in /etc/passwd exist in /etc/group", 'function': CISAudit.audit_etc_passwd_gids_exist_in_etc_group, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.4", 'description': "Ensure shadow group is empty", 'function': CISAudit.audit_shadow_group_is_empty, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.5", 'description': "Ensure no duplicate user names exist", 'function': CISAudit.audit_duplicate_user_names, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.6", 'description': "Ensure no duplicate group names exist", 'function': CISAudit.audit_duplicate_group_names, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.7", 'description': "Ensure no duplicate UIDs exist", 'function': CISAudit.audit_duplicate_uids, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.8", 'description': "Ensure no duplicate GIDs exist", 'function': CISAudit.audit_duplicate_gids, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.9", 'description': "Ensure root is the only UID 0 account", 'function': CISAudit.audit_root_is_only_uid_0_account, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.10", 'description': "Ensure root PATH integrity", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-            {'_id': "6.2.11", 'description': "Ensure all users' home directories exist", 'function': CISAudit.audit_homedirs_exist, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.12", 'description': "Ensure users own their home directories", 'function': CISAudit.audit_homedirs_ownership, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.13", 'description': "Ensure users' home directory permissions are 750 or more restrictive", 'function': CISAudit.audit_homedirs_permissions, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.14", 'description': "Ensure users' dot files are not group or world writable", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.15", 'description': "Ensure no users have .forward files", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.16", 'description': "Ensure no users have .netrc files", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "6.2.17", 'description': "Ensure no users have .rhosts files", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-        ],
-    }
-}
-
-
-## Script Functions ##
-def main():  # pragma: no cover
-    config = parse_arguments()
-    audit = CISAudit(config=config)
-
-    host_os = 'centos7'
-    benchmark_version = '3.1.2'
-
-    # test_list = audit.get_tests_list(host_os, benchmarks_version)
-    test_list = benchmarks[host_os][benchmark_version]
-    results = audit.run_tests(test_list)
-    audit.output(config.outformat, results)
-
-
-def parse_arguments(argv=sys.argv):
-    description = "This script runs tests on the system to check for compliance against the CIS Benchmarks. No changes are made to system files by this script."
-    epilog = f"""
-Examples:
-
-    Run with debug enabled:
-    {__file__} --debug
-
-    Exclude tests from section 1.1 and 1.3.2:
-    {__file__} --exclude 1.1 1.3.2
-
-    Include tests only from section 4.1 but exclude tests from section 4.1.1:
-    {__file__} --include 4.1 --exclude 4.1.1
-
-    Run only level 1 tests
-    {__file__} --level 1
-
-    Run level 1 tests and include some but not all SELinux questions
-    {__file__} --level 1 --include 1.6 --exclude 1.6.1.2
-    """
-
-    level_choices = [1, 2]
-    log_level_choices = ['DEBUG', 'INFO', 'WARNING', 'CRITICAL']
-    output_choices = ['csv', 'json', 'psv', 'text', 'tsv']
-    system_type_choices = ['server', 'workstation']
-    version_str = f'{os.path.basename(__file__)} {__version__})'
-
-    parser = ArgumentParser(description=description, epilog=epilog, formatter_class=RawTextHelpFormatter)
-
-    parser.add_argument('--level', action='store', choices=level_choices, default=0, type=int, help='Run tests for the specified level only')
-    parser.add_argument('--include', action='store', nargs='+', dest='includes', help='Space delimited list of tests to include')
-    parser.add_argument('--exclude', action='store', nargs='+', dest='excludes', help='Space delimited list of tests to exclude')
-    parser.add_argument('-l', '--log-level', action='store', choices=log_level_choices, default='INFO', help='Set log output level')
-    parser.add_argument('--debug', action='store_const', const='DEBUG', dest='log_level', help='Run script with debug output turned on. Equivalent to --log-level DEBUG')
-    parser.add_argument('--nice', action='store_true', default=True, help='Lower the CPU priority for test execution. This is the default behaviour.')
-    parser.add_argument('--no-nice', action='store_false', dest='nice', help='Do not lower CPU priority for test execution. This may make the tests complete faster but at the cost of putting a higher load on the server. Setting this overrides the --nice option.')
-    parser.add_argument('--no-colour', '--no-color', action='store_true', help='Disable colouring for STDOUT. Output redirected to a file/pipe is never coloured.')
-    parser.add_argument('--system-type', action='store', choices=system_type_choices, default='server', help='Set which test level to reference')
-    parser.add_argument('--server', action='store_const', const='server', dest='system_type', help='Use "server" levels to determine which tests to run. Equivalent to --system-type server [Default]')
-    parser.add_argument('--workstation', action='store_const', const='workstation', dest='system_type', help='Use "workstation" levels to determine which tests to run. Equivalent to --system-type workstation')
-    parser.add_argument('--outformat', action='store', choices=output_choices, default='text', help='Output type for results')
-    parser.add_argument('--text', action='store_const', const='text', dest='outformat', help='Output results as text. Equivalent to --output text [default]')
-    parser.add_argument('--json', action='store_const', const='json', dest='outformat', help='Output results as json. Equivalent to --output json')
-    parser.add_argument('--csv', action='store_const', const='csv', dest='outformat', help='Output results as comma-separated values. Equivalent to --output csv')
-    parser.add_argument('--psv', action='store_const', const='psv', dest='outformat', help='Output results as pipe-separated values. Equivalent to --output psv')
-    parser.add_argument('--tsv', action='store_const', const='tsv', dest='outformat', help='Output results as tab-separated values. Equivalent to --output tsv')
-    parser.add_argument('-V', '--version', action='version', version=version_str, help='Print version and exit')
-    parser.add_argument('-c', '--config', action='store', help='Location of config file to load')
-
-    args = parser.parse_args(argv[1:])
-
-    logger = logging.getLogger(__name__)
-
-    ## --log-level
-    if args.log_level == 'DEBUG':
-        logger.setLevel(level=args.log_level)
-        logger.debug('Debugging enabled')
-
-    ## --nice
-    if args.nice:
-        logger.debug('Tests will run with reduced CPU priority')
-
-    ## --no-colour
-    if args.no_colour:
-        logger.debug('Coloured output will be disabled')
-
-    ## --include
-    if args.includes:
-        logger.debug(f'Include list is populated "{args.includes}"')
-    else:
-        logger.debug('Include list is empty')
-
-    ## --exclude
-    if args.excludes:
-        logger.debug(f'Exclude list is populated "{args.excludes}"')
-    else:
-        logger.debug('Exclude list is empty')
-
-    ## --level
-    if args.level == 0:
-        logger.debug('Going to run tests from any level')
-    elif args.level == 1:
-        logger.debug('Going to run Level 1 tests')
-    elif args.level == 2:
-        logger.debug('Going to run Level 2 tests')
-
-    ## --system-type
-    if args.system_type == 'server':
-        logger.debug('Going to use "server" levels for test determination')
-    elif args.system_type == 'workstation':
-        logger.debug('Going to use "workstation" levels for test determination')
-
-    ## --outformat
-    if args.outformat == 'text':
-        logger.debug('Going to use "text" outputter')
-    elif args.outformat == 'json':
-        logger.debug('Going to use "json" outputter')
-    elif args.outformat == 'csv':
-        logger.debug('Going to use "csv" outputter')
-
-    return args
-
-
-### Entrypoint ###
-if __name__ == '__main__':  # pragma: no cover
-    main()

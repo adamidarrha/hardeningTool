@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_nxdx_support_pass(self, cmd):
@@ -25,15 +25,15 @@ def mock_nxdx_support_fail(self, cmd):
 
 
 class TestNXDXSupportEnabled:
-    test = CISAudit()
+    test = Centos7Audit()
     test_id = '1.1'
 
-    @patch.object(CISAudit, "_shellexec", mock_nxdx_support_pass)
+    @patch.object(Centos7Audit, "_shellexec", mock_nxdx_support_pass)
     def test_nxdx_support_enabled_pass(self):
         state = self.test.audit_nxdx_support_enabled()
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_nxdx_support_fail)
+    @patch.object(Centos7Audit, "_shellexec", mock_nxdx_support_fail)
     def test_nxdx_support_enabled_fail(self):
         state = self.test.audit_nxdx_support_enabled()
         assert state == 1

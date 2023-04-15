@@ -5,7 +5,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -30,12 +30,12 @@ def setup_to_fail():
 
 
 def test_integrate_audit_audit_log_size_is_configured_pass(setup_to_pass):
-    state = CISAudit().audit_audit_log_size_is_configured()
+    state = Centos7Audit().audit_audit_log_size_is_configured()
     assert state == 0
 
 
 def test_integrate_audit_audit_log_size_is_configured_fail(setup_to_fail):
-    state = CISAudit().audit_audit_log_size_is_configured()
+    state = Centos7Audit().audit_audit_log_size_is_configured()
     assert state == 1
 
 

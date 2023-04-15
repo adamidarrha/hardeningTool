@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_shadow_group_is_empty(self, cmd):
@@ -32,22 +32,22 @@ def mock_shadow_group_is_absent(self, cmd):
     return SimpleNamespace(stdout=output, stderr=error, returncode=returncode)
 
 
-test = CISAudit()
+test = Centos7Audit()
 
 
-@patch.object(CISAudit, "_shellexec", mock_shadow_group_is_empty)
+@patch.object(Centos7Audit, "_shellexec", mock_shadow_group_is_empty)
 def test_audit_shadow_group_is_empty_pass():
     state = test.audit_shadow_group_is_empty()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_shadow_group_is_absent)
+@patch.object(Centos7Audit, "_shellexec", mock_shadow_group_is_absent)
 def test_audit_shadow_group_is_absent_pass():
     state = test.audit_shadow_group_is_empty()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_shadow_group_is_not_empty)
+@patch.object(Centos7Audit, "_shellexec", mock_shadow_group_is_not_empty)
 def test_audit_shadow_group_is_empty_fail():
     state = test.audit_shadow_group_is_empty()
     assert state == 3

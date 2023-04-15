@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -32,12 +32,12 @@ def setup_to_pass():
 
 
 def test_integration_audit_events_that_modify_usergroup_info_are_collected_pass(setup_to_pass):
-    state = CISAudit().audit_events_that_modify_usergroup_info_are_collected()
+    state = Centos7Audit().audit_events_that_modify_usergroup_info_are_collected()
     assert state == 0
 
 
 def test_integration_audit_events_that_modify_usergroup_info_are_collected_fail():
-    state = CISAudit().audit_events_that_modify_usergroup_info_are_collected()
+    state = Centos7Audit().audit_events_that_modify_usergroup_info_are_collected()
     assert state == 3
 
 

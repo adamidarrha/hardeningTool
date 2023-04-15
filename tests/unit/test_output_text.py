@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 results = [
     ('1', 'section header'),
@@ -16,7 +16,7 @@ results = [
 
 
 def test_output_text(capsys):
-    CISAudit().output_text(data=results)
+    Centos7Audit().output_text(data=results)
 
     output, error = capsys.readouterr()
     print(output)

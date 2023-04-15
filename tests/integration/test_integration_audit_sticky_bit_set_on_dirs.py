@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 @pytest.fixture
@@ -21,12 +21,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_sticky_bit_on_world_writable_dirs_pass():
-    state = CISAudit().audit_sticky_bit_on_world_writable_dirs()
+    state = Centos7Audit().audit_sticky_bit_on_world_writable_dirs()
     assert state == 0
 
 
 def test_integration_audit_sticky_bit_on_world_writable_dirs_fail(setup_to_fail):
-    state = CISAudit().audit_sticky_bit_on_world_writable_dirs()
+    state = Centos7Audit().audit_sticky_bit_on_world_writable_dirs()
     assert state == 1
 
 

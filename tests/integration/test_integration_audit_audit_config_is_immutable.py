@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -23,12 +23,12 @@ def setup_to_fail():
 
 
 def test_audit_audit_config_is_immutable_pass(setup_to_pass):
-    state = CISAudit().audit_audit_config_is_immutable()
+    state = Centos7Audit().audit_audit_config_is_immutable()
     assert state == 0
 
 
 def test_audit_audit_config_is_immutable_fail(setup_to_fail):
-    state = CISAudit().audit_audit_config_is_immutable()
+    state = Centos7Audit().audit_audit_config_is_immutable()
     assert state == 1
 
 

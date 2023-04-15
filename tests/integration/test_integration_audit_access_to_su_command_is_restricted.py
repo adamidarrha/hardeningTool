@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -31,17 +31,17 @@ def setup_access_to_su_command_is_restricted_fail_with_no_users_in_group():
 
 
 def test_audit_access_to_su_command_is_restricted_pass(setup_access_to_su_command_is_restricted_pass):
-    state = CISAudit().audit_access_to_su_command_is_restricted()
+    state = Centos7Audit().audit_access_to_su_command_is_restricted()
     assert state == 0
 
 
 def test_audit_access_to_su_command_is_restricted_fail():
-    state = CISAudit().audit_access_to_su_command_is_restricted()
+    state = Centos7Audit().audit_access_to_su_command_is_restricted()
     assert state == 1
 
 
 def test_audit_access_to_su_command_is_restricted_fail_with_no_users_in_group(setup_access_to_su_command_is_restricted_fail_with_no_users_in_group):
-    state = CISAudit().audit_access_to_su_command_is_restricted()
+    state = Centos7Audit().audit_access_to_su_command_is_restricted()
     assert state == 2
 
 

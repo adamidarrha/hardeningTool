@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_sticky_bit_set(self, cmd):
@@ -33,15 +33,15 @@ def mock_sticky_bit_error(self, cmd):
 
 
 class TestPartitionOptions:
-    test = CISAudit()
+    test = Centos7Audit()
     test_id = '1.1'
 
-    @patch.object(CISAudit, "_shellexec", mock_sticky_bit_set)
+    @patch.object(Centos7Audit, "_shellexec", mock_sticky_bit_set)
     def test_directory_sticky_bit_is_set(self):
         state = self.test.audit_sticky_bit_on_world_writable_dirs()
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_sticky_bit_not_set)
+    @patch.object(Centos7Audit, "_shellexec", mock_sticky_bit_not_set)
     def test_directory_sticky_bit_is_not_set(self):
         state = self.test.audit_sticky_bit_on_world_writable_dirs()
         assert state == 1

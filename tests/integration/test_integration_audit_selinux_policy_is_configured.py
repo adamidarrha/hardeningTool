@@ -5,7 +5,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -27,12 +27,12 @@ def setup_to_fail(request):
 
 
 def test_integration_audit_selinux_policy_configured_pass():
-    state = CISAudit().audit_selinux_policy_is_configured()
+    state = Centos7Audit().audit_selinux_policy_is_configured()
     assert state == 0
 
 
 def test_integration_audit_selinux_policy_configured_fail(setup_to_fail):
-    state = CISAudit().audit_selinux_policy_is_configured()
+    state = Centos7Audit().audit_selinux_policy_is_configured()
     assert state == 3
 
 

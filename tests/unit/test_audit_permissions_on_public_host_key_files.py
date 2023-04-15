@@ -7,7 +7,7 @@ import pytest
 
 import cis_audit
 
-test = cis_audit.CISAudit()
+test = cis_audit.Centos7Audit()
 
 
 def mock_audit_file_permissions_pass(*args, **kwargs):
@@ -29,15 +29,15 @@ def mock_shellexec(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(cis_audit.CISAudit, "_shellexec", mock_shellexec)
-@patch.object(cis_audit.CISAudit, "audit_file_permissions", mock_audit_file_permissions_pass)
+@patch.object(cis_audit.Centos7Audit, "_shellexec", mock_shellexec)
+@patch.object(cis_audit.Centos7Audit, "audit_file_permissions", mock_audit_file_permissions_pass)
 def test_audit_permissions_on_public_host_key_files_pass():
     state = test.audit_permissions_on_public_host_key_files()
     assert state == 0
 
 
-@patch.object(cis_audit.CISAudit, "_shellexec", mock_shellexec)
-@patch.object(cis_audit.CISAudit, "audit_file_permissions", mock_audit_file_permissions_fail)
+@patch.object(cis_audit.Centos7Audit, "_shellexec", mock_shellexec)
+@patch.object(cis_audit.Centos7Audit, "audit_file_permissions", mock_audit_file_permissions_fail)
 def test_audit_permissions_on_public_host_key_files_fail():
     state = test.audit_permissions_on_public_host_key_files()
     assert state == 3

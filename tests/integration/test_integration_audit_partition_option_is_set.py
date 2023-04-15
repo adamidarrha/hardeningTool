@@ -2,16 +2,16 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def test_integration_audit_partition_option_is_set():
-    state = CISAudit().audit_partition_option_is_set(partition='/boot', option='relatime')
+    state = Centos7Audit().audit_partition_option_is_set(partition='/boot', option='relatime')
     assert state == 0
 
 
 def test_integration_audit_partition_option_is_not_set():
-    state = CISAudit().audit_partition_option_is_set(partition='/boot', option='nodev')
+    state = Centos7Audit().audit_partition_option_is_set(partition='/boot', option='nodev')
     assert state == 1
 
 

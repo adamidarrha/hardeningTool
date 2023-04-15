@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -23,12 +23,12 @@ def setup_to_pass():
 
 
 def test_integration_audit_nftables_outbound_and_established_connections_pass(setup_install_nftables, setup_to_pass):
-    state = CISAudit().audit_nftables_outbound_and_established_connections()
+    state = Centos7Audit().audit_nftables_outbound_and_established_connections()
     assert state == 0
 
 
 def test_integration_audit_nftables_outbound_and_established_connections_fail(setup_install_nftables):
-    state = CISAudit().audit_nftables_outbound_and_established_connections()
+    state = Centos7Audit().audit_nftables_outbound_and_established_connections()
     assert state == 3
 
 

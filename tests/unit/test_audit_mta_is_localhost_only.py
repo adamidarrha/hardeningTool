@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_mta_pass(self, cmd):
@@ -25,15 +25,15 @@ def mock_mta_fail(self, cmd):
 
 
 class TestMTAIsLocalhost:
-    test = CISAudit()
+    test = Centos7Audit()
     test_id = '1.1'
 
-    @patch.object(CISAudit, "_shellexec", mock_mta_pass)
+    @patch.object(Centos7Audit, "_shellexec", mock_mta_pass)
     def test_mta_is_localhost_pass(self):
         state = self.test.audit_mta_is_localhost_only()
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_mta_fail)
+    @patch.object(Centos7Audit, "_shellexec", mock_mta_fail)
     def test_mta_is_localhost_fail(self):
         state = self.test.audit_mta_is_localhost_only()
         assert state == 1

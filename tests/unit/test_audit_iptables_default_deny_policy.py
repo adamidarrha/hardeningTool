@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_iptables_default_deny_pass(self, cmd):
@@ -36,28 +36,28 @@ def mock_iptables_default_deny_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-test = CISAudit()
+test = Centos7Audit()
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_default_deny_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_default_deny_pass)
 def test_audit_iptables_default_deny_pass_ipv4():
     state = test.audit_iptables_default_deny_policy(ip_version='ipv4')
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_default_deny_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_default_deny_fail)
 def test_audit_iptables_default_deny_fail_ipv4():
     state = test.audit_iptables_default_deny_policy(ip_version='ipv4')
     assert state == 7
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_default_deny_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_default_deny_pass)
 def test_audit_iptables_default_deny_pass_ipv6():
     state = test.audit_iptables_default_deny_policy(ip_version='ipv6')
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_default_deny_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_default_deny_fail)
 def test_audit_iptables_default_deny_fail_ipv6():
     state = test.audit_iptables_default_deny_policy(ip_version='ipv6')
     assert state == 7

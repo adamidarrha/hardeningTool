@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_audit_rsyslog_sends_logs_to_a_remote_log_host_pass1(self, cmd):
@@ -45,19 +45,19 @@ def mock_audit_rsyslog_sends_logs_to_a_remote_log_host_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_audit_rsyslog_sends_logs_to_a_remote_log_host_pass1)
+@patch.object(Centos7Audit, "_shellexec", mock_audit_rsyslog_sends_logs_to_a_remote_log_host_pass1)
 def test_audit_rsyslog_sends_logs_to_a_remote_log_host_pass1():
     state = test.audit_rsyslog_sends_logs_to_a_remote_log_host()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_audit_rsyslog_sends_logs_to_a_remote_log_host_pass2)
+@patch.object(Centos7Audit, "_shellexec", mock_audit_rsyslog_sends_logs_to_a_remote_log_host_pass2)
 def test_audit_rsyslog_sends_logs_to_a_remote_log_host_pass2():
     state = test.audit_rsyslog_sends_logs_to_a_remote_log_host()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_audit_rsyslog_sends_logs_to_a_remote_log_host_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_audit_rsyslog_sends_logs_to_a_remote_log_host_fail)
 def test_audit_rsyslog_sends_logs_to_a_remote_log_host_fail():
     state = test.audit_rsyslog_sends_logs_to_a_remote_log_host()
     assert state == 1

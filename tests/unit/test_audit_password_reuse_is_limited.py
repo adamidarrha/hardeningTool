@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_password_reuse_is_limited_pass(*args):
@@ -30,13 +30,13 @@ def mock_password_reuse_is_limited_fail(*args):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_password_reuse_is_limited_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_password_reuse_is_limited_pass)
 def test_audit_password_reuse_is_limited_pass():
     state = test.audit_password_reuse_is_limited()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_password_reuse_is_limited_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_password_reuse_is_limited_fail)
 def test_audit_password_reuse_is_limited_pass_fail():
     state = test.audit_password_reuse_is_limited()
     assert state == 1

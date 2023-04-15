@@ -36,9 +36,9 @@ def mock_datetime_utcnow(offset=0):
     return datetime(year=1, month=1, day=1)
 
 
-@patch.object(cis_audit.CISAudit, '_get_utcnow', mock_datetime_utcnow)
+@patch.object(cis_audit.Centos7Audit, '_get_utcnow', mock_datetime_utcnow)
 class TestRunTests:
-    test = cis_audit.CISAudit()
+    test = cis_audit.Centos7Audit()
 
     test_args = {}
     test_args['_id'] = '1.1'

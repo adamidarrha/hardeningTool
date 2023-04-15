@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -32,12 +32,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_homedirs_ownership_fail(setup_to_fail):
-    state = CISAudit().audit_homedirs_ownership()
+    state = Centos7Audit().audit_homedirs_ownership()
     assert state == 1
 
 
 def test_integration_audit_homedirs_ownership_pass(setup_to_pass):
-    state = CISAudit().audit_homedirs_ownership()
+    state = Centos7Audit().audit_homedirs_ownership()
     assert state == 0
 
 

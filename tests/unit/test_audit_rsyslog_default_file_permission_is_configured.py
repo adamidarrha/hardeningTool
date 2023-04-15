@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_audit_rsyslog_default_file_permission_is_configured_pass(self, cmd):
@@ -29,13 +29,13 @@ def mock_audit_rsyslog_default_file_permission_is_configured_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_audit_rsyslog_default_file_permission_is_configured_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_audit_rsyslog_default_file_permission_is_configured_pass)
 def test_audit_rsyslog_default_file_permission_is_configured_pass():
     state = test.audit_rsyslog_default_file_permission_is_configured()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_audit_rsyslog_default_file_permission_is_configured_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_audit_rsyslog_default_file_permission_is_configured_fail)
 def test_audit_rsyslog_default_file_permission_is_configured_fail():
     state = test.audit_rsyslog_default_file_permission_is_configured()
     assert state == 1

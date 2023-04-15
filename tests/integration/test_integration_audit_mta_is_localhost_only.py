@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -21,12 +21,12 @@ def setup_to_fail():
 
 
 def test_integration_mta_is_localhost_pass():
-    state = CISAudit().audit_mta_is_localhost_only()
+    state = Centos7Audit().audit_mta_is_localhost_only()
     assert state == 0
 
 
 def test_integration_mta_is_localhost_fail(setup_to_fail):
-    state = CISAudit().audit_mta_is_localhost_only()
+    state = Centos7Audit().audit_mta_is_localhost_only()
     assert state == 1
 
 

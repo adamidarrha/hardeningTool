@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -19,12 +19,12 @@ def setup_to_pass():
 
 
 def test_integration_audit_journald_configured_to_send_logs_to_rsyslog_pass(setup_to_pass):
-    state = CISAudit().audit_journald_configured_to_send_logs_to_rsyslog()
+    state = Centos7Audit().audit_journald_configured_to_send_logs_to_rsyslog()
     assert state == 0
 
 
 def test_integration_audit_journald_configured_to_send_logs_to_rsyslog_fail():
-    state = CISAudit().audit_journald_configured_to_send_logs_to_rsyslog()
+    state = Centos7Audit().audit_journald_configured_to_send_logs_to_rsyslog()
     assert state == 1
 
 

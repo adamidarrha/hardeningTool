@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_audit_events_for_kernel_module_loading_and_unloading_are_collected_pass(self, cmd):
@@ -39,13 +39,13 @@ def mock_audit_events_for_kernel_module_loading_and_unloading_are_collected_fail
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_audit_events_for_kernel_module_loading_and_unloading_are_collected_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_audit_events_for_kernel_module_loading_and_unloading_are_collected_pass)
 def test_audit_events_for_kernel_module_loading_and_unloading_are_collected_pass():
     state = test.audit_events_for_kernel_module_loading_and_unloading_are_collected()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_audit_events_for_kernel_module_loading_and_unloading_are_collected_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_audit_events_for_kernel_module_loading_and_unloading_are_collected_fail)
 def test_audit_events_for_kernel_module_loading_and_unloading_are_collected_fail():
     state = test.audit_events_for_kernel_module_loading_and_unloading_are_collected()
     assert state == 3

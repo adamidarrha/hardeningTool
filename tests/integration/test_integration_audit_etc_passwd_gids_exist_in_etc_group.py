@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -16,12 +16,12 @@ def setup_to_fail():
 
 
 def test_integration_gids_from_etcpasswd_are_in_etcgroup_pass():
-    state = CISAudit().audit_etc_passwd_gids_exist_in_etc_group()
+    state = Centos7Audit().audit_etc_passwd_gids_exist_in_etc_group()
     assert state == 0
 
 
 def test_integration_gids_from_etcpasswd_are_in_etcgroup_fail(setup_to_fail):
-    state = CISAudit().audit_etc_passwd_gids_exist_in_etc_group()
+    state = Centos7Audit().audit_etc_passwd_gids_exist_in_etc_group()
     assert state == 1
 
 

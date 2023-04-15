@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_audit_journald_configured_to_write_logfiles_to_disk_pass(self, cmd):
@@ -29,13 +29,13 @@ def mock_audit_journald_configured_to_write_logfiles_to_disk_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_audit_journald_configured_to_write_logfiles_to_disk_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_audit_journald_configured_to_write_logfiles_to_disk_pass)
 def test_audit_journald_configured_to_write_logfiles_to_disk_pass():
     state = test.audit_journald_configured_to_write_logfiles_to_disk()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_audit_journald_configured_to_write_logfiles_to_disk_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_audit_journald_configured_to_write_logfiles_to_disk_fail)
 def test_audit_journald_configured_to_write_logfiles_to_disk_fail():
     state = test.audit_journald_configured_to_write_logfiles_to_disk()
     assert state == 1

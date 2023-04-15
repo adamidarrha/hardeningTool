@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -37,12 +37,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_system_is_disabled_when_audit_logs_are_full_pass(setup_to_pass):
-    state = CISAudit().audit_system_is_disabled_when_audit_logs_are_full()
+    state = Centos7Audit().audit_system_is_disabled_when_audit_logs_are_full()
     assert state == 0
 
 
 def test_integration_audit_system_is_disabled_when_audit_logs_are_full_fail(setup_to_fail):
-    state = CISAudit().audit_system_is_disabled_when_audit_logs_are_full()
+    state = Centos7Audit().audit_system_is_disabled_when_audit_logs_are_full()
     assert state == 7
 
 

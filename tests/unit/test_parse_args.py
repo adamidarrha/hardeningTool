@@ -6,7 +6,7 @@ import pytest
 
 import cis_audit
 
-test = cis_audit.CISAudit()
+test = cis_audit.Centos7Audit()
 
 
 def test_parse_arg_debug(caplog):

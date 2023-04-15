@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_root_is_only_uid_0_account_pass(self, cmd):
@@ -26,13 +26,13 @@ def mock_root_is_only_uid_0_account_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_root_is_only_uid_0_account_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_root_is_only_uid_0_account_pass)
 def test_audit_root_is_only_uid_0_account_pass():
     state = test.audit_root_is_only_uid_0_account()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_root_is_only_uid_0_account_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_root_is_only_uid_0_account_fail)
 def test_audit_root_is_only_uid_0_account_fail():
     state = test.audit_root_is_only_uid_0_account()
     assert state == 1

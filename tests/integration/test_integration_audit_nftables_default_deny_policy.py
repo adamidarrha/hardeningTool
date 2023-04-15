@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -28,12 +28,12 @@ def setup_to_pass():
 
 
 def test_integration_audit_nftables_default_deny_policy_pass(setup_install_nftables, setup_to_pass):
-    state = CISAudit().audit_nftables_default_deny_policy()
+    state = Centos7Audit().audit_nftables_default_deny_policy()
     assert state == 0
 
 
 def test_integration_audit_nftables_default_deny_policy_fail(setup_install_nftables):
-    state = CISAudit().audit_nftables_default_deny_policy()
+    state = Centos7Audit().audit_nftables_default_deny_policy()
     assert state == 7
 
 

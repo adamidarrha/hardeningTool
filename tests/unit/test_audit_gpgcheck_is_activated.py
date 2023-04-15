@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_gpgcheck_activated_pass(self, cmd):
@@ -65,25 +65,25 @@ def mock_gpgcheck_activated_fail_state_3(self, cmd):
 
 
 class TestGPGCheckActivated:
-    test = CISAudit()
+    test = Centos7Audit()
     test_id = '1.1'
 
-    @patch.object(CISAudit, "_shellexec", mock_gpgcheck_activated_pass)
+    @patch.object(Centos7Audit, "_shellexec", mock_gpgcheck_activated_pass)
     def test_check_gpgcheck_is_activated_pass(self):
         state = self.test.audit_gpgcheck_is_activated()
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_gpgcheck_activated_fail_state_1)
+    @patch.object(Centos7Audit, "_shellexec", mock_gpgcheck_activated_fail_state_1)
     def test_check_gpgcheck_is_activated_fail_state_1(self):
         state = self.test.audit_gpgcheck_is_activated()
         assert state == 1
 
-    @patch.object(CISAudit, "_shellexec", mock_gpgcheck_activated_fail_state_2)
+    @patch.object(Centos7Audit, "_shellexec", mock_gpgcheck_activated_fail_state_2)
     def test_check_gpgcheck_is_activated_fail_state_2(self):
         state = self.test.audit_gpgcheck_is_activated()
         assert state == 2
 
-    @patch.object(CISAudit, "_shellexec", mock_gpgcheck_activated_fail_state_3)
+    @patch.object(Centos7Audit, "_shellexec", mock_gpgcheck_activated_fail_state_3)
     def test_check_gpgcheck_is_activated_fail_state_3(self):
         state = self.test.audit_gpgcheck_is_activated()
         assert state == 3

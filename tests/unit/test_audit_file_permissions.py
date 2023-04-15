@@ -40,7 +40,7 @@ def mock_uid_gid(id):
 @patch.object(cis_audit, "getgrgid", mock_uid_gid)
 @patch.object(cis_audit, "getpwuid", mock_uid_gid)
 class TestFileOwnership:
-    test = cis_audit.CISAudit()
+    test = cis_audit.Centos7Audit()
     test_id = '1.1'
     file = '.'
     user = 'root'
@@ -64,7 +64,7 @@ class TestFileOwnership:
 
 
 class TestFilePermissionErrors:
-    test = cis_audit.CISAudit()
+    test = cis_audit.Centos7Audit()
     test_id = '1.1'
     file = '/pytest'
     user = 'root'
@@ -102,7 +102,7 @@ class TestFilePermissionErrors:
 @patch.object(cis_audit, "getgrgid", mock_uid_gid)
 @patch.object(cis_audit, "getpwuid", mock_uid_gid)
 class TestFilePermissions:
-    test = cis_audit.CISAudit()
+    test = cis_audit.Centos7Audit()
     test_id = '1.1'
     file = '.'
     user = 'root'
@@ -161,7 +161,7 @@ class TestFilePermissions:
 @patch.object(cis_audit, "getgrgid", mock_uid_gid)
 @patch.object(cis_audit, "getpwuid", mock_uid_gid)
 class TestFilePermissionFailureStates:
-    test = cis_audit.CISAudit()
+    test = cis_audit.Centos7Audit()
     test_id = '1.1'
     file = '.'
     user = 'root'

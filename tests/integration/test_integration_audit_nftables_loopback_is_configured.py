@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -20,12 +20,12 @@ def setup_to_pass():
 
 
 def test_integration_audit_nftables_loopback_is_configured_pass(setup_install_nftables, setup_to_pass):
-    state = CISAudit().audit_nftables_loopback_is_configured()
+    state = Centos7Audit().audit_nftables_loopback_is_configured()
     assert state == 0
 
 
 def test_integration_audit_nftables_loopback_is_configured_fail(setup_install_nftables):
-    state = CISAudit().audit_nftables_loopback_is_configured()
+    state = Centos7Audit().audit_nftables_loopback_is_configured()
     assert state == 7
 
 

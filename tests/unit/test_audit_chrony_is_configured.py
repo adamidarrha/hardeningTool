@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_chrony_configured_pass(self, cmd):
@@ -41,16 +41,16 @@ def mock_chrony_configured_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 class TestChronyIsConfigured:
-    @patch.object(CISAudit, "_shellexec", mock_chrony_configured_pass)
+    @patch.object(Centos7Audit, "_shellexec", mock_chrony_configured_pass)
     def test_chrony_is_configure_pass(self):
         state = test.audit_chrony_is_configured()
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_chrony_configured_fail)
+    @patch.object(Centos7Audit, "_shellexec", mock_chrony_configured_fail)
     def test_chrony_is_configure_fail(self):
         state = test.audit_chrony_is_configured()
         assert state == 15

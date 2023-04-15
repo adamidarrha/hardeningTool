@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_bootloader_password_pass(self, cmd):
@@ -37,19 +37,19 @@ def mock_bootloader_password_error(self, cmd):
 
 
 class TestBootloaderPasswordSet:
-    test = CISAudit()
+    test = Centos7Audit()
 
-    @patch.object(CISAudit, "_shellexec", mock_bootloader_password_pass)
+    @patch.object(Centos7Audit, "_shellexec", mock_bootloader_password_pass)
     def test_bootloader_password_set_pass(self):
         state = self.test.audit_bootloader_password_is_set()
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_bootloader_password_fail_blank)
+    @patch.object(Centos7Audit, "_shellexec", mock_bootloader_password_fail_blank)
     def test_bootloader_password_set_fail_blank(self):
         state = self.test.audit_bootloader_password_is_set()
         assert state == 1
 
-    @patch.object(CISAudit, "_shellexec", mock_bootloader_password_fail_commented)
+    @patch.object(Centos7Audit, "_shellexec", mock_bootloader_password_fail_commented)
     def test_bootloader_password_set_fail_commented(self):
         state = self.test.audit_bootloader_password_is_set()
         assert state == 1

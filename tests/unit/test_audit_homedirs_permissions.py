@@ -12,7 +12,7 @@ from unittest.mock import patch
 import pytest
 from pyfakefs import fake_filesystem
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_homedirs_data(self):
@@ -30,10 +30,10 @@ def mock_homedirs_data(self):
 ## I know that pyfakefs automatically creates the 'fs' fixture for pytest for us, however stating it
 ##   explicitly helps demonstrate where it's come from for those less familar with it.
 fs = fake_filesystem.FakeFilesystem()
-test = CISAudit()
+test = Centos7Audit()
 
 
-@patch.object(CISAudit, "_get_homedirs", mock_homedirs_data)
+@patch.object(Centos7Audit, "_get_homedirs", mock_homedirs_data)
 def test_audit_homedirs_permissions_pass_750(fs):
     fs.create_dir('/root', perm_bits=0o750)
     fs.create_dir('/home/pytest', perm_bits=0o750)
@@ -42,7 +42,7 @@ def test_audit_homedirs_permissions_pass_750(fs):
     assert state == 0
 
 
-@patch.object(CISAudit, "_get_homedirs", mock_homedirs_data)
+@patch.object(Centos7Audit, "_get_homedirs", mock_homedirs_data)
 def test_audit_homedirs_permissions_pass_700(fs):
     fs.create_dir('/root', perm_bits=0o700)
     fs.create_dir('/home/pytest', perm_bits=0o700)
@@ -51,7 +51,7 @@ def test_audit_homedirs_permissions_pass_700(fs):
     assert state == 0
 
 
-@patch.object(CISAudit, "_get_homedirs", mock_homedirs_data)
+@patch.object(Centos7Audit, "_get_homedirs", mock_homedirs_data)
 def test_audit_homedirs_permissions_fail_755(fs):
     fs.create_dir('/root', perm_bits=0o755)
     fs.create_dir('/home/pytest', perm_bits=0o755)
@@ -60,7 +60,7 @@ def test_audit_homedirs_permissions_fail_755(fs):
     assert state == 1
 
 
-@patch.object(CISAudit, "_get_homedirs", mock_homedirs_data)
+@patch.object(Centos7Audit, "_get_homedirs", mock_homedirs_data)
 def test_audit_homedirs_permissions_fail_770(fs):
     fs.create_dir('/root', perm_bits=0o770)
     fs.create_dir('/home/pytest', perm_bits=0o770)

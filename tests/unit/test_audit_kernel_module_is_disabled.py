@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_module_disabled(self, cmd):
@@ -49,21 +49,21 @@ def mock_filesystem_not_found(self, cmd):
     return SimpleNamespace(stdout=output, stderr=error, returncode=returncode)
 
 
-@patch.object(CISAudit, "_shellexec", mock_module_disabled)
+@patch.object(Centos7Audit, "_shellexec", mock_module_disabled)
 def test_audit_kernel_module_is_disabled_pass_disabled():
-    state = CISAudit().audit_kernel_module_is_disabled(module='pytest')
+    state = Centos7Audit().audit_kernel_module_is_disabled(module='pytest')
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_filesystem_not_found)
+@patch.object(Centos7Audit, "_shellexec", mock_filesystem_not_found)
 def test_audit_kernel_module_is_disabled_pass_not_found():
-    state = CISAudit().audit_kernel_module_is_disabled(module='pytest')
+    state = Centos7Audit().audit_kernel_module_is_disabled(module='pytest')
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_module_enabled)
+@patch.object(Centos7Audit, "_shellexec", mock_module_enabled)
 def test_audit_kernel_module_is_disabled_fail():
-    state = CISAudit().audit_kernel_module_is_disabled(module='pytest')
+    state = Centos7Audit().audit_kernel_module_is_disabled(module='pytest')
     assert state == 2
 
 

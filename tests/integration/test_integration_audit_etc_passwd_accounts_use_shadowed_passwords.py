@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -16,12 +16,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_etc_passwd_accounts_use_shadowed_passwords_pass():
-    state = CISAudit().audit_etc_passwd_accounts_use_shadowed_passwords()
+    state = Centos7Audit().audit_etc_passwd_accounts_use_shadowed_passwords()
     assert state == 0
 
 
 def test_integration_audit_etc_passwd_accounts_use_shadowed_passwords_fail(setup_to_fail):
-    state = CISAudit().audit_etc_passwd_accounts_use_shadowed_passwords()
+    state = Centos7Audit().audit_etc_passwd_accounts_use_shadowed_passwords()
     assert state == 1
 
 

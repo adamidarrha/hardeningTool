@@ -25,7 +25,7 @@ class CreateTestFile(object):
 
 
 class TestFileOwnership:
-    test = cis_audit.CISAudit()
+    test = cis_audit.Centos7Audit()
     test_id = '1.1'
     file = '/tmp/pytest'
     user = 'root'
@@ -49,7 +49,7 @@ class TestFileOwnership:
 
 
 class TestFilePermissionErrors:
-    test = cis_audit.CISAudit()
+    test = cis_audit.Centos7Audit()
     test_id = '1.1'
     file = '/tmp/pytest'
     user = 'root'
@@ -81,7 +81,7 @@ class TestFilePermissionErrors:
 
 
 class TestFilePermissions:
-    test = cis_audit.CISAudit()
+    test = cis_audit.Centos7Audit()
     test_id = '1.1'
     file = '/tmp/pytest'
     user = 'root'
@@ -138,7 +138,7 @@ class TestFilePermissions:
 
 
 class TestFilePermissionFailureStates:
-    test = cis_audit.CISAudit()
+    test = cis_audit.Centos7Audit()
     test_id = '1.1'
     file = '/tmp/pytest'
     user = 'root'

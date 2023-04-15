@@ -4,7 +4,7 @@ from time import sleep
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -35,12 +35,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_no_unconfined_services_pass(setup_to_pass):
-    state = CISAudit().audit_no_unconfined_services()
+    state = Centos7Audit().audit_no_unconfined_services()
     assert state == 0
 
 
 def test_integration_audit_no_unconfined_services_fail(setup_to_fail):
-    state = CISAudit().audit_no_unconfined_services()
+    state = Centos7Audit().audit_no_unconfined_services()
     assert state == 1
 
 

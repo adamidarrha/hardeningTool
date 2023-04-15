@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -44,22 +44,22 @@ def setup_to_fail_supplementary():
 
 
 def test_integration_audit_shadow_group_is_empty_pass_absent():
-    state = CISAudit().audit_shadow_group_is_empty()
+    state = Centos7Audit().audit_shadow_group_is_empty()
     assert state == 0
 
 
 def test_integration_audit_shadow_group_is_empty_pass_empty(setup_to_pass_empty):
-    state = CISAudit().audit_shadow_group_is_empty()
+    state = Centos7Audit().audit_shadow_group_is_empty()
     assert state == 0
 
 
 def test_integration_audit_shadow_group_is_empty_fail_primary(setup_to_fail_primary):
-    state = CISAudit().audit_shadow_group_is_empty()
+    state = Centos7Audit().audit_shadow_group_is_empty()
     assert state == 2
 
 
 def test_integration_audit_shadow_group_is_empty_fail_supplementary(setup_to_fail_supplementary):
-    state = CISAudit().audit_shadow_group_is_empty()
+    state = Centos7Audit().audit_shadow_group_is_empty()
     assert state == 1
 
 

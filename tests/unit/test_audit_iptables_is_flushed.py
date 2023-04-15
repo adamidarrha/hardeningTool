@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_iptables_is_flushed_pass(self, cmd, **kwargs):
@@ -26,16 +26,16 @@ def mock_iptables_is_flushed_fail(self, cmd, **kwargs):
     return SimpleNamespace(stdout=output, stderr=error, returncode=returncode)
 
 
-test = CISAudit()
+test = Centos7Audit()
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_is_flushed_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_is_flushed_pass)
 def test_iptables_is_flushed_pass():
     state = test.audit_iptables_is_flushed()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_is_flushed_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_is_flushed_fail)
 def test_iptables_is_flushed_fail():
     state = test.audit_iptables_is_flushed()
     assert state == 3

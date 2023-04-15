@@ -3,7 +3,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -26,17 +26,17 @@ def setup_to_pass_not_installed():
 
 
 def test_audit_package_not_installed_or_service_is_masked_pass_not_installed(setup_to_pass_not_installed):
-    state = CISAudit().audit_package_not_installed_or_service_is_masked(package='rsync', service='rsyncd')
+    state = Centos7Audit().audit_package_not_installed_or_service_is_masked(package='rsync', service='rsyncd')
     assert state == 0
 
 
 def test_audit_package_not_installed_or_service_is_masked_pass_masked(setup_to_pass_masked):
-    state = CISAudit().audit_package_not_installed_or_service_is_masked(package='rsync', service='rsyncd')
+    state = Centos7Audit().audit_package_not_installed_or_service_is_masked(package='rsync', service='rsyncd')
     assert state == 0
 
 
 def test_audit_package_not_installed_or_service_is_masked_fail():
-    state = CISAudit().audit_package_not_installed_or_service_is_masked(package='rsync', service='rsyncd')
+    state = Centos7Audit().audit_package_not_installed_or_service_is_masked(package='rsync', service='rsyncd')
     assert state == 1
 
 

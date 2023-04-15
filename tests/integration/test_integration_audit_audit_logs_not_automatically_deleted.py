@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -17,12 +17,12 @@ def setup_to_fail():
 
 
 def test_audit_audit_logs_not_automatically_deleted_pass(setup_to_pass):
-    state = CISAudit().audit_audit_logs_not_automatically_deleted()
+    state = Centos7Audit().audit_audit_logs_not_automatically_deleted()
     assert state == 0
 
 
 def test_audit_audit_logs_not_automatically_deleted_fail(setup_to_fail):
-    state = CISAudit().audit_audit_logs_not_automatically_deleted()
+    state = Centos7Audit().audit_audit_logs_not_automatically_deleted()
     assert state == 1
 
 

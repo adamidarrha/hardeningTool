@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 data = [
     ('1', 'section header'),
@@ -15,11 +15,11 @@ data = [
 ]
 
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def test_integration_output_csv(capsys):
-    CISAudit().output(data=data, format='csv')
+    Centos7Audit().output(data=data, format='csv')
 
     output, error = capsys.readouterr()
     assert error == ''
@@ -34,7 +34,7 @@ def test_integration_output_csv(capsys):
 
 
 def test_integration_output_json(capsys):
-    CISAudit().output(data=data, format='json')
+    Centos7Audit().output(data=data, format='json')
 
     output, error = capsys.readouterr()
     assert error == ''
@@ -42,7 +42,7 @@ def test_integration_output_json(capsys):
 
 
 def test_integration_output_psv(capsys):
-    CISAudit().output(data=data, format='psv')
+    Centos7Audit().output(data=data, format='psv')
 
     output, error = capsys.readouterr()
     assert error == ''
@@ -57,7 +57,7 @@ def test_integration_output_psv(capsys):
 
 
 def test_integration_output_text(capsys):
-    CISAudit().output(data=data, format='text')
+    Centos7Audit().output(data=data, format='text')
 
     output, error = capsys.readouterr()
     print(output)
@@ -77,7 +77,7 @@ def test_integration_output_text(capsys):
 
 
 def test_integration_output_tsv(capsys):
-    CISAudit().output(data=data, format='tsv')
+    Centos7Audit().output(data=data, format='tsv')
 
     output, error = capsys.readouterr()
     assert error == ''

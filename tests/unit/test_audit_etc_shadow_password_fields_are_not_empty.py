@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_etc_shadow_password_fields_are_not_empty_pass(self, cmd):
@@ -26,13 +26,13 @@ def mock_etc_shadow_password_fields_are_not_empty_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_etc_shadow_password_fields_are_not_empty_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_etc_shadow_password_fields_are_not_empty_pass)
 def test_audit_etc_shadow_password_fields_are_not_empty_pass():
     state = test.audit_etc_shadow_password_fields_are_not_empty()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_etc_shadow_password_fields_are_not_empty_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_etc_shadow_password_fields_are_not_empty_fail)
 def test_audit_etc_shadow_password_fields_are_not_empty_fail():
     state = test.audit_etc_shadow_password_fields_are_not_empty()
     assert state == 1

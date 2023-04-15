@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -18,12 +18,12 @@ def setup_to_pass():
 
 
 def test_integration_audit_service_masked_pass(setup_to_pass):
-    state = CISAudit().audit_service_is_masked(service='rsyncd')
+    state = Centos7Audit().audit_service_is_masked(service='rsyncd')
     assert state == 0
 
 
 def test_integration_audit_service_masked_fail():
-    state = CISAudit().audit_service_is_masked(service='rsyncd')
+    state = Centos7Audit().audit_service_is_masked(service='rsyncd')
     assert state == 1
 
 

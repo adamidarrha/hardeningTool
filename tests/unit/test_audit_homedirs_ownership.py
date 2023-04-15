@@ -13,7 +13,7 @@ from unittest.mock import patch
 import pytest
 from pyfakefs import fake_filesystem
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_homedirs_data(self, cmd):
@@ -31,10 +31,10 @@ def mock_homedirs_data(self, cmd):
 ## I know that pyfakefs automatically creates the 'fs' fixture for pytest for us, however stating it
 ##   explicitly helps demonstrate where it's come from for those less familar with it.
 fs = fake_filesystem.FakeFilesystem()
-test = CISAudit()
+test = Centos7Audit()
 
 
-@patch.object(CISAudit, "_shellexec", mock_homedirs_data)
+@patch.object(Centos7Audit, "_shellexec", mock_homedirs_data)
 def test_audit_homedirs_ownership_fail(fs):
     ## Create /root and /home/pytest as root:root
     fake_filesystem.set_uid(0)
@@ -46,7 +46,7 @@ def test_audit_homedirs_ownership_fail(fs):
     assert state == 1
 
 
-@patch.object(CISAudit, "_shellexec", mock_homedirs_data)
+@patch.object(Centos7Audit, "_shellexec", mock_homedirs_data)
 def test_audit_homedirs_ownership_pass(fs):
     ## Create /root homedir as root:root
     fake_filesystem.set_uid(0)

@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -45,22 +45,22 @@ def setup_to_fail():
 
 
 def test_integration_audit_gdm_last_user_logged_in_disabled_error_not_installed():
-    state = CISAudit().audit_gdm_last_user_logged_in_disabled()
+    state = Centos7Audit().audit_gdm_last_user_logged_in_disabled()
     assert state == -2
 
 
 def test_integration_audit_gdm_last_user_logged_in_disabled_fail_files_not_found(setup_install_gdm):
-    state = CISAudit().audit_gdm_last_user_logged_in_disabled()
+    state = Centos7Audit().audit_gdm_last_user_logged_in_disabled()
     assert state == 17
 
 
 def test_integration_audit_gdm_last_user_logged_in_disabled_fail(setup_install_gdm, setup_to_fail):
-    state = CISAudit().audit_gdm_last_user_logged_in_disabled()
+    state = Centos7Audit().audit_gdm_last_user_logged_in_disabled()
     assert state == 46
 
 
 def test_integration_audit_gdm_last_user_logged_in_disabled_pass(setup_install_gdm, setup_to_pass):
-    state = CISAudit().audit_gdm_last_user_logged_in_disabled()
+    state = Centos7Audit().audit_gdm_last_user_logged_in_disabled()
     assert state == 0
 
 

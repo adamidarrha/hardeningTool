@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -44,22 +44,22 @@ def setup_to_fail_file_not_found():
 
 
 def test_integration_audit_selinux_not_disabled_in_bootloader_pass():
-    state = CISAudit().audit_selinux_not_disabled_in_bootloader()
+    state = Centos7Audit().audit_selinux_not_disabled_in_bootloader()
     assert state == 0
 
 
 def test_integration_audit_selinux_not_disabled_in_bootloader_fail_disabled(setup_to_fail_disabled):
-    state = CISAudit().audit_selinux_not_disabled_in_bootloader()
+    state = Centos7Audit().audit_selinux_not_disabled_in_bootloader()
     assert state == 2
 
 
 def test_integration_audit_selinux_not_disabled_in_bootloader_fail_permissive(setup_to_fail_permissive):
-    state = CISAudit().audit_selinux_not_disabled_in_bootloader()
+    state = Centos7Audit().audit_selinux_not_disabled_in_bootloader()
     assert state == 2
 
 
 def test_integration_audit_selinux_not_disabled_in_bootloader_fail_no_match(setup_to_fail_file_not_found):
-    state = CISAudit().audit_selinux_not_disabled_in_bootloader()
+    state = Centos7Audit().audit_selinux_not_disabled_in_bootloader()
     assert state == -1
 
 

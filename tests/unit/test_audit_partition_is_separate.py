@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_parition_exists(self, cmd):
@@ -28,14 +28,14 @@ class TestPartitionSeparate:
     test_id = '1.1'
     test_level = 1
     partition = '/dev/sda1'
-    test = CISAudit()
+    test = Centos7Audit()
 
-    @patch.object(CISAudit, "_shellexec", mock_parition_exists)
+    @patch.object(Centos7Audit, "_shellexec", mock_parition_exists)
     def test_partition_is_separate(self):
         state = self.test.audit_partition_is_separate(partition=self.partition)
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_parititon_not_exists)
+    @patch.object(Centos7Audit, "_shellexec", mock_parititon_not_exists)
     def test_partition_is_not_separate(self):
         state = self.test.audit_partition_is_separate(partition=self.partition)
         assert state == 1

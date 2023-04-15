@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_updates_pass(*args, **kwargs):
@@ -38,19 +38,19 @@ def mock_updates_error(*args, **kwargs):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_updates_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_updates_pass)
 def test_audit_updates_installed_pass():
     state = test.audit_updates_installed()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_updates_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_updates_fail)
 def test_audit_updates_installed_fail():
     state = test.audit_updates_installed()
     assert state == 1
 
 
-@patch.object(CISAudit, "_shellexec", mock_updates_error)
+@patch.object(Centos7Audit, "_shellexec", mock_updates_error)
 def test_audit_updates_installed_error():
     state = test.audit_updates_installed()
     assert state == -1

@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -18,12 +18,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_system_accounts_are_secured_pass():
-    state = CISAudit().audit_system_accounts_are_secured()
+    state = Centos7Audit().audit_system_accounts_are_secured()
     assert state == 0
 
 
 def test_integration_audit_system_accounts_are_secured_fail(setup_to_fail):
-    state = CISAudit().audit_system_accounts_are_secured()
+    state = Centos7Audit().audit_system_accounts_are_secured()
     assert state == 1
 
 

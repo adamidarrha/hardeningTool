@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_sudo_use_pty_pass(*args, **kwargs):
@@ -29,15 +29,15 @@ def mock_sudo_use_pty_error(*args, **kwargs):
 
 
 class TestSudoCommandUsePty:
-    test = CISAudit()
+    test = Centos7Audit()
     test_id = '1.1'
 
-    @patch.object(CISAudit, "_shellexec", mock_sudo_use_pty_pass)
+    @patch.object(Centos7Audit, "_shellexec", mock_sudo_use_pty_pass)
     def test_sudo_use_pty_pass(self):
         state = self.test.audit_sudo_commands_use_pty()
         assert state == 0
 
-    @patch.object(CISAudit, "_shellexec", mock_sudo_use_pty_fail)
+    @patch.object(Centos7Audit, "_shellexec", mock_sudo_use_pty_fail)
     def test_sudo_use_pty_fail(self):
         state = self.test.audit_sudo_commands_use_pty()
         assert state == 1

@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 def mock_default_group_for_root_pass(self, cmd):
@@ -26,13 +26,13 @@ def mock_default_group_for_root_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-@patch.object(CISAudit, "_shellexec", mock_default_group_for_root_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_default_group_for_root_pass)
 def test_audit_default_group_for_root_pass():
     state = test.audit_default_group_for_root()
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_default_group_for_root_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_default_group_for_root_fail)
 def test_audit_default_group_for_root_fail():
     state = test.audit_default_group_for_root()
     assert state == 1

@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -27,22 +27,22 @@ def setup_to_pass():
 
 
 def test_integration_audit_iptables_default_deny_pass_ipv4(setup_to_pass):
-    state = CISAudit().audit_iptables_default_deny_policy(ip_version='ipv4')
+    state = Centos7Audit().audit_iptables_default_deny_policy(ip_version='ipv4')
     assert state == 0
 
 
 def test_integration_audit_iptables_default_deny_fail_ipv4():
-    state = CISAudit().audit_iptables_default_deny_policy(ip_version='ipv4')
+    state = Centos7Audit().audit_iptables_default_deny_policy(ip_version='ipv4')
     assert state == 7
 
 
 def test_integration_audit_iptables_default_deny_pass_ipv6(setup_to_pass):
-    state = CISAudit().audit_iptables_default_deny_policy(ip_version='ipv6')
+    state = Centos7Audit().audit_iptables_default_deny_policy(ip_version='ipv6')
     assert state == 0
 
 
 def test_integration_audit_iptables_default_deny_fail_ipv6():
-    state = CISAudit().audit_iptables_default_deny_policy(ip_version='ipv6')
+    state = Centos7Audit().audit_iptables_default_deny_policy(ip_version='ipv6')
     assert state == 7
 
 

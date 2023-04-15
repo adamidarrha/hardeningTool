@@ -2,7 +2,7 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -16,12 +16,12 @@ def setup_to_fail():
 
 
 def test_integration_audit_default_group_for_root_pass():
-    state = CISAudit().audit_default_group_for_root()
+    state = Centos7Audit().audit_default_group_for_root()
     assert state == 0
 
 
 def test_integration_audit_default_group_for_root_fail(setup_to_fail):
-    state = CISAudit().audit_default_group_for_root()
+    state = Centos7Audit().audit_default_group_for_root()
     assert state == 1
 
 

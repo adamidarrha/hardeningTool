@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_sysctl_flags_are_set_pass(self, cmd):
@@ -32,18 +32,18 @@ def mock_sysctl_flags_are_set_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-test = CISAudit()
+test = Centos7Audit()
 flags = ["net.ipv6.conf.all.disable_ipv6", "net.ipv6.conf.default.disable_ipv6"]
 
 
-@patch.object(CISAudit, "_shellexec", mock_sysctl_flags_are_set_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_sysctl_flags_are_set_pass)
 def test_audit_sysctl_flags_are_set_pass():
     value = 1
     state = test.audit_sysctl_flags_are_set(flags, value)
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_sysctl_flags_are_set_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_sysctl_flags_are_set_fail)
 def test_audit_sysctl_flags_are_set_fail():
     value = 0
     state = test.audit_sysctl_flags_are_set(flags, value)

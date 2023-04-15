@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 
@@ -67,17 +67,17 @@ def setup_to_pass_systemd():
 
 
 def test_integration_filesystem_integrity_pass_crontab(setup_to_pass_crontab):
-    state = CISAudit().audit_filesystem_integrity_regularly_checked()
+    state = Centos7Audit().audit_filesystem_integrity_regularly_checked()
     assert state == 0
 
 
 def test_integration_filesystem_integrity_pass_systemd(setup_to_pass_systemd):
-    state = CISAudit().audit_filesystem_integrity_regularly_checked()
+    state = Centos7Audit().audit_filesystem_integrity_regularly_checked()
     assert state == 0
 
 
 def test_integration_filesystem_integrity_fail():
-    state = CISAudit().audit_filesystem_integrity_regularly_checked()
+    state = Centos7Audit().audit_filesystem_integrity_regularly_checked()
     assert state == 1
 
 

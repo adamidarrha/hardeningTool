@@ -2,16 +2,16 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def test_integration_audit_ervice_active_pass():
-    state = CISAudit().audit_service_is_active(service='sshd')
+    state = Centos7Audit().audit_service_is_active(service='sshd')
     assert state == 0
 
 
 def test_integration_audit_service_active_fail():
-    state = CISAudit().audit_service_is_active(service='rsyncd')
+    state = Centos7Audit().audit_service_is_active(service='rsyncd')
     assert state == 1
 
 

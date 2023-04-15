@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_iptables_loopback_is_configured_pass_ipv4(self, cmd):
@@ -65,30 +65,30 @@ def mock_iptables_loopback_is_configured_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 ## IPv4
-@patch.object(CISAudit, "_shellexec", mock_iptables_loopback_is_configured_pass_ipv4)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_loopback_is_configured_pass_ipv4)
 def test_audit_iptables_loopback_is_configured_pass():
     state = test.audit_iptables_loopback_is_configured(ip_version='ipv4')
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_loopback_is_configured_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_loopback_is_configured_fail)
 def test_audit_iptables_loopback_is_configured_fail():
     state = test.audit_iptables_loopback_is_configured(ip_version='ipv4')
     assert state == 7
 
 
 ## IPv6
-@patch.object(CISAudit, "_shellexec", mock_iptables_loopback_is_configured_pass_ipv6)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_loopback_is_configured_pass_ipv6)
 def test_audit_ip6tables_loopback_is_configured_pass():
     state = test.audit_iptables_loopback_is_configured(ip_version='ipv6')
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_loopback_is_configured_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_loopback_is_configured_fail)
 def test_audit_ip6tables_loopback_is_configured_fail():
     state = test.audit_iptables_loopback_is_configured(ip_version='ipv6')
     assert state == 7

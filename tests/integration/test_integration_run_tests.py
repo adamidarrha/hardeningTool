@@ -2,26 +2,26 @@
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
-test = CISAudit()
+test = Centos7Audit()
 
 test_list = [
     {'_id': "1", 'description': "Initial Setup", 'type': "header"},
     {'_id': "1.1", 'description': "Filesystem Configuration", 'type': "header"},
     {'_id': "1.1.1", 'description': "Disable unused filesystems", 'type': "header"},
-    {'_id': "1.1.1.1", 'description': "Ensure mounting of cramfs is disabled", 'function': CISAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'cramfs'}, 'levels': {'server': 1, 'workstation': 1}},
-    {'_id': "1.1.1.2", 'description': "Ensure mounting of squashfs is disabled", 'type': "skip", 'function': CISAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'squashfs'}, 'levels': {'server': 2, 'workstation': 2}},
+    {'_id': "1.1.1.1", 'description': "Ensure mounting of cramfs is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'cramfs'}, 'levels': {'server': 1, 'workstation': 1}},
+    {'_id': "1.1.1.2", 'description': "Ensure mounting of squashfs is disabled", 'type': "skip", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'squashfs'}, 'levels': {'server': 2, 'workstation': 2}},
     {'_id': "1.1.1.3", 'description': "Ensure mounting of udf is disabled", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
-    {'_id': "1.1.22", 'description': 'Ensure sticky bit is set on all world-writable directories', 'function': CISAudit.audit_sticky_bit_on_world_writable_dirs, 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
-    {'_id': "1.2.3", 'description': "Ensure gpgcheck is globally activated", 'function': CISAudit.audit_gpgcheck_is_activated, 'levels': {'server': 1, 'workstation': 1}},
-    {'_id': "1.8.3", 'description': "Ensure last logged in user display is disabled", 'function': CISAudit.audit_gdm_last_user_logged_in_disabled, 'levels': {'server': 1, 'workstation': 1}},
-    {'_id': "9.9.9", 'description': "Test error", 'function': CISAudit().audit_file_permissions(file='/tmp/pytest', expected_mode='0644', expected_user='root', expected_group='root'), 'levels': {'server': 1, 'workstation': 1}},
+    {'_id': "1.1.22", 'description': 'Ensure sticky bit is set on all world-writable directories', 'function': Centos7Audit.audit_sticky_bit_on_world_writable_dirs, 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
+    {'_id': "1.2.3", 'description': "Ensure gpgcheck is globally activated", 'function': Centos7Audit.audit_gpgcheck_is_activated, 'levels': {'server': 1, 'workstation': 1}},
+    {'_id': "1.8.3", 'description': "Ensure last logged in user display is disabled", 'function': Centos7Audit.audit_gdm_last_user_logged_in_disabled, 'levels': {'server': 1, 'workstation': 1}},
+    {'_id': "9.9.9", 'description': "Test error", 'function': Centos7Audit().audit_file_permissions(file='/tmp/pytest', expected_mode='0644', expected_user='root', expected_group='root'), 'levels': {'server': 1, 'workstation': 1}},
 ]
 
 
 def test_integration_run_tests(capsys, caplog):
-    results = CISAudit().run_tests(tests=test_list)
+    results = Centos7Audit().run_tests(tests=test_list)
 
     print(results)
     assert caplog.records != ''

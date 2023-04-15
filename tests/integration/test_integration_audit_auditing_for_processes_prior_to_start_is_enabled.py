@@ -5,7 +5,7 @@ import shutil
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 from tests.integration import shellexec
 
 efi_contents = [
@@ -249,17 +249,17 @@ def setup_to_fail():
 
 
 def test_audit_auditing_for_processes_prior_to_start_is_enabled_pass_efidir(setup_to_pass_efi):
-    state = CISAudit().audit_auditing_for_processes_prior_to_start_is_enabled()
+    state = Centos7Audit().audit_auditing_for_processes_prior_to_start_is_enabled()
     assert state == 0
 
 
 def test_audit_auditing_for_processes_prior_to_start_is_enabled_pass_grub(setup_to_pass_grub):
-    state = CISAudit().audit_auditing_for_processes_prior_to_start_is_enabled()
+    state = Centos7Audit().audit_auditing_for_processes_prior_to_start_is_enabled()
     assert state == 0
 
 
 def test_audit_auditing_for_processes_prior_to_start_is_enabled_fail(setup_to_fail):
-    state = CISAudit().audit_auditing_for_processes_prior_to_start_is_enabled()
+    state = Centos7Audit().audit_auditing_for_processes_prior_to_start_is_enabled()
     assert state == 1
 
 

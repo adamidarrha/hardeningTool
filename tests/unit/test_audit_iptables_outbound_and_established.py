@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cis_audit import CISAudit
+from cis_audit import Centos7Audit
 
 
 def mock_iptables_outbound_and_established_pass(self, cmd):
@@ -31,30 +31,30 @@ def mock_iptables_outbound_and_established_fail(self, cmd):
     return SimpleNamespace(returncode=returncode, stderr=stderr, stdout=stdout)
 
 
-test = CISAudit()
+test = Centos7Audit()
 
 
 ## IPv4
-@patch.object(CISAudit, "_shellexec", mock_iptables_outbound_and_established_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_outbound_and_established_pass)
 def test_audit_iptables_outbound_and_established_ipv4_pass():
     state = test.audit_iptables_outbound_and_established_connections(ip_version='ipv4')
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_outbound_and_established_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_outbound_and_established_fail)
 def test_audit_iptables_outbound_and_established_ipv4_fail():
     state = test.audit_iptables_outbound_and_established_connections(ip_version='ipv4')
     assert state == 63
 
 
 ## IPv6
-@patch.object(CISAudit, "_shellexec", mock_iptables_outbound_and_established_pass)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_outbound_and_established_pass)
 def test_audit_ip6tables_outbound_and_established_ipv4_pass():
     state = test.audit_iptables_outbound_and_established_connections(ip_version='ipv6')
     assert state == 0
 
 
-@patch.object(CISAudit, "_shellexec", mock_iptables_outbound_and_established_fail)
+@patch.object(Centos7Audit, "_shellexec", mock_iptables_outbound_and_established_fail)
 def test_audit_ip6tables_outbound_and_established_ipv4_fail():
     state = test.audit_iptables_outbound_and_established_connections(ip_version='ipv6')
     assert state == 63
