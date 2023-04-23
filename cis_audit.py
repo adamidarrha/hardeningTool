@@ -32,6 +32,7 @@ from tests.integration import (
 
 
 ### Classes ###
+#put all os independant functions here
 class CISAudit:
     def __init__(self, config):
         if config:
@@ -245,15 +246,34 @@ class CISAudit:
 
         return results
 
-
+#put all linux independent functions here
 class LinuxIndependentAudit(CISAudit):
     def __init__(self, config=None):
         super().__init__(config)
+    
+    def audit_access_to_su_command_is_restricted(self) -> int:
+        state = 0
+        cmd = R"grep -Pi '^\h*auth\h+(?:required|requisite)\h+pam_wheel\.so\h+(?:[^#\n\r]+\h+)?((?!\2)(use_uid\b|group=\H+\b))\h+(?:[^#\n\r]+\h+)?((?!\1)(use_uid\b|group=\H+\b))(\h+.*)?$' /etc/pam.d/su"
 
-class Centos7Audit(CISAudit):
-    def __init__(self, config=None):
-        super().__init__(config)
+        r = self._shellexec(cmd)
 
+        if r.stdout[0] == '':
+            state += 1
+        else:
+            for entry in r.stdout[0].split():
+                if entry.startswith('group='):
+                    group = entry.split('=')[1]
+                    break
+
+            cmd = f'grep {group} /etc/group'
+            r = self._shellexec(cmd)
+            regex = re.compile('^[a-z-]+:x:[0-9]+:$')
+
+            if not regex.match(r.stdout[0]):
+                state += 2
+
+        return state
+    
     def _get_homedirs(self) -> "Generator[str, int, str]":
         cmd = R"awk -F: '($1!~/(halt|sync|shutdown|nfsnobody)/ && $7!~/^(\/usr)?\/sbin\/nologin(\/)?$/ && $7!~/(\/usr)?\/bin\/false(\/)?$/) { print $1,$3,$6 }' /etc/passwd"
         r = self._shellexec(cmd)
@@ -263,9 +283,56 @@ class Centos7Audit(CISAudit):
                 user, uid, homedir = row.split(' ')
 
                 yield user, int(uid), homedir
-
+    
     def _get_utcnow(self) -> datetime:
         return datetime.utcnow()
+    
+    def _shellexec(self, command: str) -> "SimpleNamespace[str, str, int]":
+        """Execute shell command on the system. Supports piped commands
+
+        Parameters
+        ----------
+        command : string, required
+            Shell command to execute
+
+        Returns
+        -------
+        Namespace:
+
+        """
+
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        output = result.stdout.decode('UTF-8').split('\n')
+        error = result.stderr.decode('UTF-8').split('\n')
+        returncode = result.returncode
+
+        if len(output) > 1:
+            output.pop(-1)
+
+        if len(error) > 1:
+            error.pop(-1)
+
+        data = SimpleNamespace(stdout=output, stderr=error, returncode=returncode)
+
+        self.log.debug(f"'{command}', {data}")
+
+        return data
+    
+    def audit_audit_config_is_immutable(self) -> int:
+        cmd = R'grep -h "^\s*[^#]" /etc/audit/rules.d/*.rules | tail -1'
+        r = self._shellexec(cmd)
+
+        if r.stdout[0] == '-e 2':
+            state = 0
+        else:
+            state = 1
+
+        return state
+
+
+class Centos7Audit(LinuxIndependentAudit):
+    def __init__(self, config=None):
+        super().__init__(config)
 
     def _is_test_included(self, test_id, test_level) -> bool:
         """Check whether a test_id should be tested or not
@@ -356,60 +423,6 @@ class Centos7Audit(CISAudit):
 
         return is_test_included
 
-    def _shellexec(self, command: str) -> "SimpleNamespace[str, str, int]":
-        """Execute shell command on the system. Supports piped commands
-
-        Parameters
-        ----------
-        command : string, required
-            Shell command to execute
-
-        Returns
-        -------
-        Namespace:
-
-        """
-
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        output = result.stdout.decode('UTF-8').split('\n')
-        error = result.stderr.decode('UTF-8').split('\n')
-        returncode = result.returncode
-
-        if len(output) > 1:
-            output.pop(-1)
-
-        if len(error) > 1:
-            error.pop(-1)
-
-        data = SimpleNamespace(stdout=output, stderr=error, returncode=returncode)
-
-        self.log.debug(f"'{command}', {data}")
-
-        return data
-
-    def audit_access_to_su_command_is_restricted(self) -> int:
-        state = 0
-        cmd = R"grep -Pi '^\h*auth\h+(?:required|requisite)\h+pam_wheel\.so\h+(?:[^#\n\r]+\h+)?((?!\2)(use_uid\b|group=\H+\b))\h+(?:[^#\n\r]+\h+)?((?!\1)(use_uid\b|group=\H+\b))(\h+.*)?$' /etc/pam.d/su"
-
-        r = self._shellexec(cmd)
-
-        if r.stdout[0] == '':
-            state += 1
-        else:
-            for entry in r.stdout[0].split():
-                if entry.startswith('group='):
-                    group = entry.split('=')[1]
-                    break
-
-            cmd = f'grep {group} /etc/group'
-            r = self._shellexec(cmd)
-            regex = re.compile('^[a-z-]+:x:[0-9]+:$')
-
-            if not regex.match(r.stdout[0]):
-                state += 2
-
-        return state
-
     def audit_at_is_restricted_to_authorized_users(self) -> int:
         state = 0
 
@@ -418,17 +431,6 @@ class Centos7Audit(CISAudit):
 
         if self.audit_file_permissions(file="/etc/at.allow", expected_user="root", expected_group="root", expected_mode="0600") != 0:
             state += 2
-
-        return state
-
-    def audit_audit_config_is_immutable(self) -> int:
-        cmd = R'grep -h "^\s*[^#]" /etc/audit/rules.d/*.rules | tail -1'
-        r = self._shellexec(cmd)
-
-        if r.stdout[0] == '-e 2':
-            state = 0
-        else:
-            state = 1
 
         return state
 

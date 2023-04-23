@@ -1,5 +1,8 @@
 from Benchmarks import benchmarks
 from cis_audit import Centos7Audit
+from cis_audit import LinuxIndependentAudit
+import distro
+import platform
 import logging  # https://docs.python.org/3/library/logging.html
 import sys  # https://docs.python.org/3/library/sys.html
 import os  # https://docs.python.org/3/library/os.html
@@ -15,12 +18,22 @@ __version__ = '0.20.0-alpha.3'
 def main():  # pragma: no cover
     #load arguments the the program ran with
     config = parse_arguments()
-    #initialise the audit class
-    audit = Centos7Audit(config=config)
-
-    host_os = 'centos7'
-    benchmark_version = '3.1.2'
-
+    #check for operating system (linux, windows, darwin'macOS')
+    if platform.system() == "linux":
+        #check for linux distribution and version
+        if distro.name() == "CentOS Linux":
+            #initialise the audit class
+            audit = Centos7Audit(config=config)
+            #set the values for the benchmarks dictionary
+            host_os = 'centos7'
+            benchmark_version = '3.1.2'
+        else:
+            audit = LinuxIndependentAudit(config=config)
+            host_os = 'linuxIndependent'
+            benchmark_version = '2.0.0'
+    else:
+        print("we dont support windows and darwin platform yet")
+        sys.exit()
     # test_list = audit.get_tests_list(host_os, benchmarks_version)
     test_list = benchmarks[host_os][benchmark_version]
     #run the audit tests and store the results

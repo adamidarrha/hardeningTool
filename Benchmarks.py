@@ -301,7 +301,7 @@ benchmarks = {
             {'_id': "6.2.17", 'description': "Ensure no users have .rhosts files", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
         ],
     },
-    
+    #here write new benchmarks 
     'linuxIndependent': {
         '2.0.0' : [
             {}#example benchmark
