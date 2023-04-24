@@ -328,6 +328,79 @@ class LinuxIndependentAudit(CISAudit):
             state = 1
 
         return state
+    
+    def audit_audit_log_size_is_configured(self) -> int:
+        cmd = R"grep -P '^max_log_file\s*=\s*[0-9]+' /etc/audit/auditd.conf"
+        r = self._shellexec(cmd)
+
+        if r.returncode == 0:
+            state = 0
+        else:
+            state = 1
+
+        return state
+
+    def audit_audit_logs_not_automatically_deleted(self) -> int:
+        cmd = R"grep '^max_log_file_action\s*=\s*keep_logs' /etc/audit/auditd.conf"
+        r = self._shellexec(cmd)
+
+        if r.returncode == 0:
+            state = 0
+        else:
+            state = 1
+
+        return state
+    
+    def audit_bootloader_password_is_set(self) -> int:
+        state = 0
+
+        cmd = R'grep "^\s*GRUB2_PASSWORD" /boot/grub2/user.cfg'
+        r = self._shellexec(cmd)
+
+        if not r.stdout[0].startswith('GRUB2_PASSWORD='):
+            state += 1
+
+        return state
+    
+    def audit_duplicate_gids(self) -> int:
+        state = 0
+        cmd = R'cut -d: -f3 /etc/group | sort | uniq -d'
+
+        r = self._shellexec(cmd)
+        if r.stdout[0] != '':
+            state = 1
+
+        return state
+
+    def audit_duplicate_group_names(self) -> int:
+        state = 0
+        cmd = R'cut -d: -f1 /etc/group | sort | uniq -d'
+
+        r = self._shellexec(cmd)
+        if r.stdout[0] != '':
+            state = 1
+
+        return state
+
+    def audit_duplicate_uids(self) -> int:
+        state = 0
+        cmd = R'cut -d: -f3 /etc/passwd | sort | uniq -d'
+
+        r = self._shellexec(cmd)
+        if r.stdout[0] != '':
+            state = 1
+
+        return state
+
+    def audit_duplicate_user_names(self) -> int:
+        state = 0
+        cmd = R'cut -d: -f1 /etc/passwd | sort | uniq -d'
+
+        r = self._shellexec(cmd)
+        if r.stdout[0] != '':
+            state = 1
+
+        return state
 
 
 class Centos7Audit(LinuxIndependentAudit):
@@ -434,28 +507,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_audit_log_size_is_configured(self) -> int:
-        cmd = R"grep -P '^max_log_file\s*=\s*[0-9]+' /etc/audit/auditd.conf"
-        r = self._shellexec(cmd)
-
-        if r.returncode == 0:
-            state = 0
-        else:
-            state = 1
-
-        return state
-
-    def audit_audit_logs_not_automatically_deleted(self) -> int:
-        cmd = R"grep '^max_log_file_action\s*=\s*keep_logs' /etc/audit/auditd.conf"
-        r = self._shellexec(cmd)
-
-        if r.returncode == 0:
-            state = 0
-        else:
-            state = 1
-
-        return state
-
     def audit_auditing_for_processes_prior_to_start_is_enabled(self) -> int:
         r"""
         #!/bin/bash
@@ -506,17 +557,6 @@ class Centos7Audit(LinuxIndependentAudit):
         r = self._shellexec(cmd)
         if r.stdout[0] not in success_strings:
             state += 2
-
-        return state
-
-    def audit_bootloader_password_is_set(self) -> int:
-        state = 0
-
-        cmd = R'grep "^\s*GRUB2_PASSWORD" /boot/grub2/user.cfg'
-        r = self._shellexec(cmd)
-
-        if not r.stdout[0].startswith('GRUB2_PASSWORD='):
-            state += 1
 
         return state
 
@@ -586,46 +626,6 @@ class Centos7Audit(LinuxIndependentAudit):
         if r.stdout[0] == '0':
             state = 0
         else:
-            state = 1
-
-        return state
-
-    def audit_duplicate_gids(self) -> int:
-        state = 0
-        cmd = R'cut -d: -f3 /etc/group | sort | uniq -d'
-
-        r = self._shellexec(cmd)
-        if r.stdout[0] != '':
-            state = 1
-
-        return state
-
-    def audit_duplicate_group_names(self) -> int:
-        state = 0
-        cmd = R'cut -d: -f1 /etc/group | sort | uniq -d'
-
-        r = self._shellexec(cmd)
-        if r.stdout[0] != '':
-            state = 1
-
-        return state
-
-    def audit_duplicate_uids(self) -> int:
-        state = 0
-        cmd = R'cut -d: -f3 /etc/passwd | sort | uniq -d'
-
-        r = self._shellexec(cmd)
-        if r.stdout[0] != '':
-            state = 1
-
-        return state
-
-    def audit_duplicate_user_names(self) -> int:
-        state = 0
-        cmd = R'cut -d: -f1 /etc/passwd | sort | uniq -d'
-
-        r = self._shellexec(cmd)
-        if r.stdout[0] != '':
             state = 1
 
         return state
