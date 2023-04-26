@@ -217,7 +217,7 @@ benchmarks = {
             {'_id': "5.1.6", 'description': "Ensure permissions on /etc/cron.monthly are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.monthly", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "5.1.7", 'description': "Ensure permissions on /etc/cron.d are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.d", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "5.1.8", 'description': "Ensure cron is restricted to authorized users", 'function': Centos7Audit.audit_cron_is_restricted_to_authorized_users, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "5.1.9", 'description': "Ensure at is restricted to authorized users", 'function': Centos7Audit.audit_at_is_restricted_to_authorized_users, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.1.9", 'description': "Ensure at is restricted to authorized users", 'function': Centos7Audit.audit_cron_is_restricted_to_authorized_users, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "5.2", 'description': "Configure sudo", 'type': "header"},
             {'_id': "5.2.1", 'description': "Ensure sudo is installed", 'function': Centos7Audit.audit_package_is_installed, 'kwargs': {'package': 'sudo'}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "5.2.2", 'description': "Ensure sudo commands use pty", 'function': Centos7Audit.audit_sudo_commands_use_pty, 'levels': {'server': 1, 'workstation': 1}},
