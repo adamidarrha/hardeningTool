@@ -401,6 +401,59 @@ class LinuxIndependentAudit(CISAudit):
             state = 1
 
         return state
+    
+    def audit_core_dumps_restricted(self) -> int:
+        state = 0
+
+        cmd = R'grep -hE "^\s*\*\s+hard\s+core" /etc/security/limits.conf /etc/security/limits.d/*'
+        r = self._shellexec(cmd)
+        if not re.match(r'\s*\*\s+hard\s+core\s+0', r.stdout[0]):
+            state += 1
+
+        cmd = R"sysctl fs.suid_dumpable"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "fs.suid_dumpable = 0":
+            state += 2
+
+        cmd = R'grep -h "fs\.suid_dumpable" /etc/sysctl.conf /etc/sysctl.d/*'
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "fs.suid_dumpable = 0":
+            state += 4
+
+        return state
+    
+    def audit_auth_for_single_user_mode(self) -> int:
+        state = 0
+        success_strings = [
+            'ExecStart=-/bin/sh -c "/sbin/sulogin; /usr/bin/systemctl --fail --no-block default"',
+            'ExecStart=-/bin/sh -c "/sbin/sulogin; /usr/bin/systemctl --job-mode=fail --no-block default"',
+            'ExecStart=-/bin/sh -c "/usr/sbin/sulogin; /usr/bin/systemctl --fail --no-block default"',
+            'ExecStart=-/bin/sh -c "/usr/sbin/sulogin; /usr/bin/systemctl --job-mode=fail --no-block default"',
+        ]
+
+        cmd = R"grep ExecStart= /usr/lib/systemd/system/rescue.service"
+        r = self._shellexec(cmd)
+        if r.stdout[0] not in success_strings:
+            state += 1
+
+        cmd = R"grep ExecStart= /usr/lib/systemd/system/rescue.service"
+        r = self._shellexec(cmd)
+        if r.stdout[0] not in success_strings:
+            state += 2
+
+        return state
+    
+    def audit_cron_is_restricted_to_authorized_users(self) -> int:
+        state = 0
+
+        if os.path.exists('/etc/at.deny'):
+            state += 1
+
+        if self.audit_file_permissions(file="/etc/at.allow", expected_user="root", expected_group="root", expected_mode="0600") != 0:
+            state += 2
+
+        return state
+
 
 
 class Centos7Audit(LinuxIndependentAudit):
@@ -495,18 +548,7 @@ class Centos7Audit(LinuxIndependentAudit):
             self.log.debug(f'Not including test {test_id}')
 
         return is_test_included
-
-    def audit_at_is_restricted_to_authorized_users(self) -> int:
-        state = 0
-
-        if os.path.exists('/etc/at.deny'):
-            state += 1
-
-        if self.audit_file_permissions(file="/etc/at.allow", expected_user="root", expected_group="root", expected_mode="0600") != 0:
-            state += 2
-
-        return state
-
+    ### linux independent start
     def audit_auditing_for_processes_prior_to_start_is_enabled(self) -> int:
         r"""
         #!/bin/bash
@@ -539,27 +581,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_auth_for_single_user_mode(self) -> int:
-        state = 0
-        success_strings = [
-            'ExecStart=-/bin/sh -c "/sbin/sulogin; /usr/bin/systemctl --fail --no-block default"',
-            'ExecStart=-/bin/sh -c "/sbin/sulogin; /usr/bin/systemctl --job-mode=fail --no-block default"',
-            'ExecStart=-/bin/sh -c "/usr/sbin/sulogin; /usr/bin/systemctl --fail --no-block default"',
-            'ExecStart=-/bin/sh -c "/usr/sbin/sulogin; /usr/bin/systemctl --job-mode=fail --no-block default"',
-        ]
-
-        cmd = R"grep ExecStart= /usr/lib/systemd/system/rescue.service"
-        r = self._shellexec(cmd)
-        if r.stdout[0] not in success_strings:
-            state += 1
-
-        cmd = R"grep ExecStart= /usr/lib/systemd/system/rescue.service"
-        r = self._shellexec(cmd)
-        if r.stdout[0] not in success_strings:
-            state += 2
-
-        return state
-
     def audit_chrony_is_configured(self) -> int:
         state = 0
 
@@ -583,27 +604,7 @@ class Centos7Audit(LinuxIndependentAudit):
         if r.stdout[0] != "chrony":
             state += 8
 
-        return state
-
-    def audit_core_dumps_restricted(self) -> int:
-        state = 0
-
-        cmd = R'grep -hE "^\s*\*\s+hard\s+core" /etc/security/limits.conf /etc/security/limits.d/*'
-        r = self._shellexec(cmd)
-        if not re.match(r'\s*\*\s+hard\s+core\s+0', r.stdout[0]):
-            state += 1
-
-        cmd = R"sysctl fs.suid_dumpable"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "fs.suid_dumpable = 0":
-            state += 2
-
-        cmd = R'grep -h "fs\.suid_dumpable" /etc/sysctl.conf /etc/sysctl.d/*'
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "fs.suid_dumpable = 0":
-            state += 4
-
-        return state
+        return state    
 
     def audit_cron_is_restricted_to_authorized_users(self) -> int:
         state = 0
@@ -629,29 +630,7 @@ class Centos7Audit(LinuxIndependentAudit):
             state = 1
 
         return state
-
-    def audit_etc_passwd_accounts_use_shadowed_passwords(self) -> int:
-        """audit_etc_passwd_accounts_use_shadowed_passwords _summary_
-
-        Returns
-        -------
-        int
-            _description_
-        """
-        """
-        Refer to passwd(5) for details on the fields in the file
-        """
-        state = 0
-        ## Note: the 'awk' command from the benchmark would be the better/tidier way to do it, but I couldn't get the mixed quote marks to work from Python, so I ended up with the following:
-        ## Original - awk -F: '($2 != "x" ) {print $1}' /etc/passwd
-        cmd = R"grep -Ev '^[a-z-]+:x:' /etc/passwd"
-        r = self._shellexec(cmd)
-
-        if r.stdout[0] != '':
-            state += 1
-
-        return state
-
+    
     def audit_etc_passwd_gids_exist_in_etc_group(self) -> int:
         gids_from_etc_group = self._shellexec("awk -F: '{print $3}' /etc/group | sort -un").stdout
         gids_from_etc_passwd = self._shellexec("awk -F: '{print $4}' /etc/passwd | sort -un").stdout
@@ -663,39 +642,7 @@ class Centos7Audit(LinuxIndependentAudit):
                 state = 1
 
         return state
-
-    def audit_etc_shadow_password_fields_are_not_empty(self) -> int:
-        state = 0
-
-        cmd = R"grep -E '^[a-z-]+::' /etc/shadow"
-        r = self._shellexec(cmd)
-
-        if r.stdout[0] != '':
-            state += 1
-
-        return state
-
-    def audit_events_for_changes_to_sysadmin_scope_are_collected(self) -> int:
-        state = 0
-        cmd1 = R"grep -h scope /etc/audit/rules.d/*.rules"
-        cmd2 = R"auditctl -l | grep scope"
-
-        expected_output = [
-            '-w /etc/sudoers -p wa -k scope',
-            '-w /etc/sudoers.d -p wa -k scope',
-        ]
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        if r1.stdout != expected_output:
-            state += 1
-
-        if r2.stdout != expected_output:
-            state += 2
-
-        return state
-
+    
     def audit_events_for_discretionary_access_control_changes_are_collected(self) -> int:
         state = 0
         cmd1 = R"grep -h perm_mod /etc/audit/rules.d/*.rules"
@@ -729,7 +676,7 @@ class Centos7Audit(LinuxIndependentAudit):
             state += 2
 
         return state
-
+    
     def audit_events_for_file_deletion_by_users_are_collected(self) -> int:
         state = 0
         cmd1 = R"grep -h delete /etc/audit/rules.d/*.rules"
@@ -1125,6 +1072,61 @@ class Centos7Audit(LinuxIndependentAudit):
                     self.log.debug(f'Test comparison for {file}, {octal_expected_mode}>={octal_file_mode} {binary_expected_mode[i]} == {binary_file_mode[i]}. Failed at index {i}. Adding {this_failure_score} to state')
                 else:
                     self.log.debug(f'Test comparison for {file}, {octal_expected_mode}>={octal_file_mode} {binary_expected_mode[i]} == {binary_file_mode[i]}. Passed at index {i}')
+
+        return state
+
+    ### linux independent end
+    def audit_etc_passwd_accounts_use_shadowed_passwords(self) -> int:
+        """audit_etc_passwd_accounts_use_shadowed_passwords _summary_
+
+        Returns
+        -------
+        int
+            _description_
+        """
+        """
+        Refer to passwd(5) for details on the fields in the file
+        """
+        state = 0
+        ## Note: the 'awk' command from the benchmark would be the better/tidier way to do it, but I couldn't get the mixed quote marks to work from Python, so I ended up with the following:
+        ## Original - awk -F: '($2 != "x" ) {print $1}' /etc/passwd
+        cmd = R"grep -Ev '^[a-z-]+:x:' /etc/passwd"
+        r = self._shellexec(cmd)
+
+        if r.stdout[0] != '':
+            state += 1
+
+        return state
+
+    def audit_etc_shadow_password_fields_are_not_empty(self) -> int:
+        state = 0
+
+        cmd = R"grep -E '^[a-z-]+::' /etc/shadow"
+        r = self._shellexec(cmd)
+
+        if r.stdout[0] != '':
+            state += 1
+
+        return state
+
+    def audit_events_for_changes_to_sysadmin_scope_are_collected(self) -> int:
+        state = 0
+        cmd1 = R"grep -h scope /etc/audit/rules.d/*.rules"
+        cmd2 = R"auditctl -l | grep scope"
+
+        expected_output = [
+            '-w /etc/sudoers -p wa -k scope',
+            '-w /etc/sudoers.d -p wa -k scope',
+        ]
+
+        r1 = self._shellexec(cmd1)
+        r2 = self._shellexec(cmd2)
+
+        if r1.stdout != expected_output:
+            state += 1
+
+        if r2.stdout != expected_output:
+            state += 2
 
         return state
 
