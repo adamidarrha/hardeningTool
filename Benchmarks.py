@@ -304,7 +304,92 @@ benchmarks = {
     #here write new benchmarks 
     'linuxIndependent': {
         '2.0.0' : [
-            {}#example benchmark
+            {},#example benchmark
+            {'_id': "5", 'description': "Access, Authentication and Authorization", 'type': "header"},
+
+            {'_id': "5.1", 'description': "Configure cron", 'type': "header"},
+            {'_id': "5.1.1", 'description': "Ensure cron daemon is enabled and running", 'function': Centos7Audit.audit_service_is_enabled_and_is_active, 'kwargs': {'service': 'crond'}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.1.2", 'description': "Ensure permissions on /etc/crontab are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/crontab", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0600"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.1.3", 'description': "Ensure permissions on /etc/cron.hourly are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.hourly", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.1.4", 'description': "Ensure permissions on /etc/cron.daily are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.daily", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.1.5", 'description': "Ensure permissions on /etc/cron.weekly are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.weekly", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.1.6", 'description': "Ensure permissions on /etc/cron.monthly are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.monthly", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.1.7", 'description': "Ensure permissions on /etc/cron.d are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/cron.d", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0700"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.1.8", 'description': "Ensure cron is restricted to authorized users", 'function': Centos7Audit.audit_cron_is_restricted_to_authorized_users, 'levels': {'server': 1, 'workstation': 1}},
+
+            {'_id': "5.2", 'description': "SSH Server Configuration", 'type': "header"},
+            {'_id': "5.2.1", 'description': "Ensure permissions on /etc/ssh/sshd_config are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/ssh/sshd_config", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0600"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.2", 'description': "Ensure permissions on SSH private host key files are configured", 'function': Centos7Audit.audit_permissions_on_private_host_key_files, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.3", 'description': "Ensure permissions on SSH public host key files are configures", 'function': Centos7Audit.audit_permissions_on_public_host_key_files, 'levels': {'server': 1, 'workstation': 1}}, 
+            {'_id': "5.2.4", 'description': "Ensure SSH Protocol is set to 2", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.5", 'description': "Ensure SSH LogLevel is appropriate", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.6", 'description': "Ensure SSH X11 forwarding is disabled", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "x11forwarding", 'expected_value': "no"}, 'levels': {'server': 2, 'workstation': 1}},
+            {'_id': "5.2.7", 'description': "Ensure SSH MaxAuthTries is set to 4 or less", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "maxauthtries", 'expected_value': "4", 'comparison': "le"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.8", 'description': "Ensure SSH IgnoreRhosts is enabled", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "ignorerhosts", 'expected_value': "yes"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.9", 'description': "Ensure SSH HostbasedAuthentication is disabled", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "hostbasedauthentication", 'expected_value': "no"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.10", 'description': "Ensure SSH root login is disabled", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "permitrootlogin", 'expected_value': "no"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.11", 'description': "Ensure SSH PermitEmptyPasswords is disabled", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "permitemptypasswords", 'expected_value': "no"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.12", 'description': "Ensure SSH PermitUserEnvironment is disabled", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "permituserenvironment", 'expected_value': "no"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.13", 'description': "Ensure only strong Ciphers are used", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.14", 'description': "Ensure only strong MAC algorithms are used", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.15", 'description': "Ensure only strong Key Exchange algorithms are used", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.16", 'description': "Ensure SSH Idle Timeout Interval is configured", 'type': "header"},
+            {'_id': "5.2.16.1", 'description': "Ensure SSH ClientAliveInterval is 300 or less", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "clientaliveinterval", 'expected_value': "300", 'comparison': "le"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.16.2", 'description': "Ensure SSH ClientAliveCountMax is 0", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "clientalivecountmax", 'expected_value': "0"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.17", 'description': "Ensure SSH LoginGraceTime is set to one minute or less", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "logingracetime", 'expected_value': "60", 'comparison': "le"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.18", 'description': "Ensure SSH access is limited", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.19", 'description': "Ensure SSH warning banner is configured", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "banner", 'expected_value': "/etc/issue.net"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.20", 'description': "Ensure SSH PAM is enabled", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "usepam", 'expected_value': "yes"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.2.21", 'description': "Ensure SSH AllowTcpForwarding is disabled", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "allowtcpforwarding", 'expected_value': "no"}, 'levels': {'server': 2, 'workstation': 2}},
+            {'_id': "5.2.22", 'description': "Ensure SSH MaxStartups is configured", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "maxstartups", 'expected_value': "10:30:60"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.3.23", 'description': "Ensure SSH MaxSessions is set to 4 or less", 'function': Centos7Audit.audit_sshd_config_option, 'kwargs': {'parameter': "maxsessions", 'expected_value': "4", 'comparison': "le"}, 'levels': {'server': 1, 'workstation': 1}}, #expected_value=10 ==>(changed) expected_value=4
+
+            {'_id': "5.3", 'description': "Configure PAM", 'type': "header"},
+            {'_id': "5.3.1", 'description': "Ensure password creation requirements are configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.3.2", 'description': "Ensure lockout for failed password attempts is configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.3.3", 'description': "Ensure password reuse is limited", 'function': Centos7Audit.audit_password_reuse_is_limited, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.3.4", 'description': "Ensure password hashing algorithm is SHA512", 'function': Centos7Audit.audit_password_hashing_algorithm, 'levels': {'server': 1, 'workstation': 1}},
+
+            {'_id': "5.4", 'description': "User Accounts and Environment", 'type': "header"},
+            {'_id': "5.4.1", 'description': "Set Shadow Password Suite Parameters", 'type': "header"},
+            {'_id': "5.4.1.1", 'description': "Ensure password expiration is 365 days or less", 'function': Centos7Audit.audit_password_expiration_max_days_is_configured, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.4.1.2", 'description': "Ensure minimum days between password changes is configured", 'function': Centos7Audit.audit_password_change_minimum_delay, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.4.1.3", 'description': "Ensure password expiration warning days is 7 or more", 'function': Centos7Audit.audit_password_expiration_warning_is_configured, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.4.1.4", 'description': "Ensure inactive password lock is 30 days or less", 'function': Centos7Audit.audit_password_inactive_lock_is_configured, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.4.1.5", 'description': "Ensure all users last password change date is in the past", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.4.2", 'description': "Ensure system accounts are secured", 'function': Centos7Audit.audit_system_accounts_are_secured, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "5.4.3", 'description': "Ensure default group for the root account is GID 0", 'function': Centos7Audit.audit_default_group_for_root, 'levels': {'server': 1, 'workstation': 1}},
+
+            {'_id': "6", 'description': "System Maintenance", 'type': "header"},
+            {'_id': "6.1", 'description': "System File Permissions", 'type': "header"},
+            {'_id': "6.1.1", 'description': "Audit system file permissions", 'levels': {'server': 2, 'workstation': 2}, 'type': "manual"},
+            {'_id': "6.1.2", 'description': "Ensure permissions on /etc/passwd are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/passwd", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0644"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.1.10", 'description': "Ensure no world writable files exist", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.1.11", 'description': "Ensure no unowned files or directories exist", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.1.12", 'description': "Ensure no ungrouped files or directories exist", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.1.13", 'description': "Audit SUID executables", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
+            {'_id': "6.1.14", 'description': "Audit SGID executables", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
+
+            {'_id': "6.2", 'description': "User and Group Settings", 'type': "header"},
+            {'_id': "6.2.5", 'description': "Ensure root is the only UID 0 account", 'function': Centos7Audit.audit_root_is_only_uid_0_account, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.6", 'description': "Ensure root PATH integrity", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
+            {'_id': "6.2.7", 'description': "Ensure all users' home directories exist", 'function': Centos7Audit.audit_homedirs_exist, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.9", 'description': "Ensure users own their home directories", 'function': Centos7Audit.audit_homedirs_ownership, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.8", 'description': "Ensure users' home directory permissions are 750 or more restrictive", 'function': Centos7Audit.audit_homedirs_permissions, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.10", 'description': "Ensure users' dot files are not group or world writable", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.11", 'description': "Ensure no users have .forward files", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.12", 'description': "Ensure no users have .netrc files", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.14", 'description': "Ensure no users have .rhosts files", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.15", 'description': "Ensure all groups in /etc/passwd exist in /etc/group", 'function': Centos7Audit.audit_etc_passwd_gids_exist_in_etc_group, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.16", 'description': "Ensure no duplicate UIDs exist", 'function': Centos7Audit.audit_duplicate_uids, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.17", 'description': "Ensure no duplicate GIDs exist", 'function': Centos7Audit.audit_duplicate_gids, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.18", 'description': "Ensure no duplicate user names exist", 'function': Centos7Audit.audit_duplicate_user_names, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.19", 'description': "Ensure no duplicate group names exist", 'function': Centos7Audit.audit_duplicate_group_names, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.2.20", 'description': "Ensure shadow group is empty", 'function': Centos7Audit.audit_shadow_group_is_empty, 'levels': {'server': 1, 'workstation': 1}},
+
+            # {'_id': "6.2.1", 'description': "Ensure password fields are not empty", 'function': Centos7Audit.audit_etc_passwd_accounts_use_shadowed_passwords, 'levels': {'server': 1, 'workstation': 1}},
+            
+
         ]
     
     }
