@@ -19,8 +19,9 @@ def main():  # pragma: no cover
     #load arguments the the program ran with
     config = parse_arguments()
     #check for operating system (linux, windows, darwin'macOS')
-    if platform.system() == "linux":
+    if platform.system() == "Linux":
         #check for linux distribution and version
+        print("linux distro")
         if distro.name() == "CentOS Linux":
             #initialise the audit class
             audit = Centos7Audit(config=config)
