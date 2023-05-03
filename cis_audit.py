@@ -156,6 +156,94 @@ class CISAudit:
 
             print(f'{id: <{width_id}}  {description: <{width_description}}  {level: ^{width_level}}  {result: ^{width_result}}  {duration: >{width_duration}}')
 
+    def _is_test_included(self, test_id, test_level) -> bool:
+        """Check whether a test_id should be tested or not
+
+        Parameters
+        ----------
+
+        test_id : string, required
+            test_id of be checked
+
+        test_level : int, required
+            Hardening level of the test_id, per the CIS Benchmarks
+
+        config : namespace, required
+            Script configuration from parse_args()
+
+        Returns
+        -------
+        bool
+            Returns a boolean indicating whether a test should be executed (True), or not (False)
+        """
+
+        self.log.debug(f'Checking whether to run test {test_id}')
+
+        is_test_included = True
+
+        ## Check if the level is one we're going to run
+        if self.config.level != 0:
+            if test_level != self.config.level:
+                self.log.debug(f'Excluding level {test_level} test {test_id}')
+                is_test_included = False
+
+        ## Check if there were explicitly included tests:
+        if self.config.includes:
+            is_parent_test = False
+            is_child_test = False
+
+            ## Check if include starts with test_id
+            for include in self.config.includes:
+                if include.startswith(test_id):
+                    is_parent_test = True
+                    break
+
+            ## Check if test_id starts with include
+            for include in self.config.includes:
+                if test_id.startswith(include):
+                    is_child_test = True
+                    break
+
+            ## Check if the test_id is in the included tests
+            if test_id in self.config.includes:
+                self.log.debug(f'Test {test_id} was explicitly included')
+                is_test_included = True
+
+            elif is_parent_test:
+                self.log.debug(f'Test {test_id} is the parent of an included test')
+                is_test_included = True
+
+            elif is_child_test:
+                self.log.debug(f'Test {test_id} is the child of an included test')
+                is_test_included = True
+
+            elif self.config.level == 0:
+                self.log.debug(f'Excluding test {test_id} (Not found in the include list)')
+                is_test_included = False
+
+        ## If this test_id was included in the tests, check it wasn't then excluded
+        if self.config.excludes:
+            is_parent_excluded = False
+
+            for exclude in self.config.excludes:
+                if test_id.startswith(exclude):
+                    is_parent_excluded = True
+                    break
+
+            if test_id in self.config.excludes:
+                self.log.debug(f'Test {test_id} was explicitly excluded')
+                is_test_included = False
+
+            elif is_parent_excluded:
+                self.log.debug(f'Test {test_id} is the child of an excluded test')
+                is_test_included = False
+
+        if is_test_included:
+            self.log.debug(f'Including test {test_id}')
+        else:
+            self.log.debug(f'Not including test {test_id}')
+
+        return is_test_included
 
     def run_tests(self, tests: "list[dict]") -> dict:
         results = []
@@ -912,105 +1000,8 @@ class LinuxIndependentAudit(CISAudit):
         if r.stdout[0] != 'active':
             state += 2
 
-        return state
+        return state 
 
-    
-
-    
-
-class Centos7Audit(LinuxIndependentAudit):
-    def __init__(self, config=None):
-        super().__init__(config)
-
-    def _is_test_included(self, test_id, test_level) -> bool:
-        """Check whether a test_id should be tested or not
-
-        Parameters
-        ----------
-
-        test_id : string, required
-            test_id of be checked
-
-        test_level : int, required
-            Hardening level of the test_id, per the CIS Benchmarks
-
-        config : namespace, required
-            Script configuration from parse_args()
-
-        Returns
-        -------
-        bool
-            Returns a boolean indicating whether a test should be executed (True), or not (False)
-        """
-
-        self.log.debug(f'Checking whether to run test {test_id}')
-
-        is_test_included = True
-
-        ## Check if the level is one we're going to run
-        if self.config.level != 0:
-            if test_level != self.config.level:
-                self.log.debug(f'Excluding level {test_level} test {test_id}')
-                is_test_included = False
-
-        ## Check if there were explicitly included tests:
-        if self.config.includes:
-            is_parent_test = False
-            is_child_test = False
-
-            ## Check if include starts with test_id
-            for include in self.config.includes:
-                if include.startswith(test_id):
-                    is_parent_test = True
-                    break
-
-            ## Check if test_id starts with include
-            for include in self.config.includes:
-                if test_id.startswith(include):
-                    is_child_test = True
-                    break
-
-            ## Check if the test_id is in the included tests
-            if test_id in self.config.includes:
-                self.log.debug(f'Test {test_id} was explicitly included')
-                is_test_included = True
-
-            elif is_parent_test:
-                self.log.debug(f'Test {test_id} is the parent of an included test')
-                is_test_included = True
-
-            elif is_child_test:
-                self.log.debug(f'Test {test_id} is the child of an included test')
-                is_test_included = True
-
-            elif self.config.level == 0:
-                self.log.debug(f'Excluding test {test_id} (Not found in the include list)')
-                is_test_included = False
-
-        ## If this test_id was included in the tests, check it wasn't then excluded
-        if self.config.excludes:
-            is_parent_excluded = False
-
-            for exclude in self.config.excludes:
-                if test_id.startswith(exclude):
-                    is_parent_excluded = True
-                    break
-
-            if test_id in self.config.excludes:
-                self.log.debug(f'Test {test_id} was explicitly excluded')
-                is_test_included = False
-
-            elif is_parent_excluded:
-                self.log.debug(f'Test {test_id} is the child of an excluded test')
-                is_test_included = False
-
-        if is_test_included:
-            self.log.debug(f'Including test {test_id}')
-        else:
-            self.log.debug(f'Not including test {test_id}')
-
-        return is_test_included
-    ### linux independent start
     def audit_auditing_for_processes_prior_to_start_is_enabled(self) -> int:
         r"""
         #!/bin/bash
@@ -1536,6 +1527,13 @@ class Centos7Audit(LinuxIndependentAudit):
                     self.log.debug(f'Test comparison for {file}, {octal_expected_mode}>={octal_file_mode} {binary_expected_mode[i]} == {binary_file_mode[i]}. Passed at index {i}')
 
         return state
+    
+
+class Centos7Audit(LinuxIndependentAudit):
+    def __init__(self, config=None):
+        super().__init__(config)
+
+    ### linux independent start
 
     ### linux independent end
     def audit_etc_passwd_accounts_use_shadowed_passwords(self) -> int:
