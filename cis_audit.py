@@ -1535,6 +1535,237 @@ class Centos7Audit(LinuxIndependentAudit):
 
     ### linux independent start
 
+    def audit_iptables_default_deny_policy(self, ip_version: str) -> int:
+        state = 0
+
+        if ip_version == 'ipv4':
+            cmd1 = 'iptables -S INPUT'
+            cmd2 = 'iptables -S FORWARD'
+            cmd3 = 'iptables -S OUTPUT'
+        elif ip_version == 'ipv6':
+            cmd1 = 'ip6tables -S INPUT'
+            cmd2 = 'ip6tables -S FORWARD'
+            cmd3 = 'ip6tables -S OUTPUT'
+
+        r1 = self._shellexec(cmd1)
+        r2 = self._shellexec(cmd2)
+        r3 = self._shellexec(cmd3)
+
+        if r1.stdout[0] != '-P INPUT DROP':
+            state += 1
+
+        if r2.stdout[0] != '-P FORWARD DROP':
+            state += 2
+
+        if r3.stdout[0] != '-P OUTPUT DROP':
+            state += 4
+
+        return state
+
+    def audit_iptables_is_flushed(self) -> int:
+        state = 0
+
+        cmd = R"iptables -S | grep -v -- -P"
+        r = self._shellexec(cmd)
+        if r.stdout != ['']:
+            state += 1
+
+        cmd = R"ip6tables -S | grep -v -- -P"
+        r = self._shellexec(cmd)
+        if r.stdout != ['']:
+            state += 2
+
+        return state
+
+    def audit_iptables_loopback_is_configured(self, ip_version: str) -> int:
+        state = 0
+
+        if ip_version == 'ipv4':
+            cmd1 = "iptables -S INPUT"
+            cmd2 = "iptables -S OUTPUT"
+        elif ip_version == 'ipv6':
+            cmd1 = "ip6tables -S INPUT"
+            cmd2 = "ip6tables -S OUTPUT"
+
+        r1 = self._shellexec(cmd1)
+        r2 = self._shellexec(cmd2)
+
+        self.log.debug(r1)
+        self.log.debug(r2)
+
+        if len(r1.stdout) < 2 or r1.stdout[1] != '-A INPUT -i lo -j ACCEPT':
+            state += 1
+
+        if ip_version == 'ipv4':
+            if len(r1.stdout) < 3 or r1.stdout[2] != '-A INPUT -s 127.0.0.0/8 -j DROP':
+                state += 2
+        elif ip_version == 'ipv6':
+            if len(r1.stdout) < 3 or r1.stdout[2] != '-A INPUT -s ::1/128 -j DROP':
+                state += 2
+
+        if len(r2.stdout) < 2 or r2.stdout[1] != '-A OUTPUT -o lo -j ACCEPT':
+            state += 4
+
+        return state
+
+    def audit_iptables_outbound_and_established_connections(self, ip_version: str) -> int:
+        state = 0
+
+        if ip_version == 'ipv4':
+            cmd = R"iptables -S"
+        elif ip_version == 'ipv6':
+            cmd = R"ip6tables -S"
+
+        r = self._shellexec(cmd)
+
+        self.log.debug(r)
+
+        if '-A INPUT -p tcp -m state --state ESTABLISHED -j ACCEPT' not in r.stdout:
+            state += 1
+
+        if '-A INPUT -p udp -m state --state ESTABLISHED -j ACCEPT' not in r.stdout:
+            state += 2
+
+        if '-A INPUT -p icmp -m state --state ESTABLISHED -j ACCEPT' not in r.stdout:
+            state += 4
+
+        if '-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED -j ACCEPT' not in r.stdout:
+            state += 8
+
+        if '-A OUTPUT -p udp -m state --state NEW,ESTABLISHED -j ACCEPT' not in r.stdout:
+            state += 16
+
+        if '-A OUTPUT -p icmp -m state --state NEW,ESTABLISHED -j ACCEPT' not in r.stdout:
+            state += 32
+
+        return state
+
+    def audit_iptables_rules_are_saved(self, ip_version: str) -> int:
+        if ip_version == 'ipv4':
+            # cmd = R"diff -qs -y <(iptables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort) <(grep -v '^#' /etc/sysconfig/iptables | sed 's/\[[0-9]*:[0-9]*\]//' | sort)"
+            cmd1 = R"iptables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
+            cmd2 = R"grep -v '^#' /etc/sysconfig/iptables | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
+        elif ip_version == 'ipv6':
+            # cmd = R"diff -qs -y <(ip6tables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort) <(grep -v '^#' /etc/sysconfig/ip6tables | sed 's/\[[0-9]*:[0-9]*\]//' | sort)"
+            cmd1 = R"ip6tables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
+            cmd2 = R"grep -v '^#' /etc/sysconfig/ip6tables | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
+
+        # r = self._shellexec(cmd)
+        r1 = self._shellexec(cmd1)
+        r2 = self._shellexec(cmd2)
+
+        self.log.debug(r1)
+        self.log.debug(r2)
+
+        if r1.returncode == 0 and r2.returncode == 0 and r1.stdout == r2.stdout:
+            state = 0
+        else:
+            state = 1
+
+        return state
+
+    def audit_nxdx_support_enabled(self) -> int:
+        state = 0
+        cmd = R'dmesg | grep "protection: active"'
+        r = self._shellexec(cmd)
+
+        if "protection: active" not in r.stdout[0]:
+            state += 1
+
+        return state
+
+    def audit_system_is_disabled_when_audit_logs_are_full(self) -> int:
+        state = 0
+
+        cmd1 = R"grep '^space_left_action =' /etc/audit/auditd.conf"
+        cmd2 = R"grep '^action_mail_acct =' /etc/audit/auditd.conf"
+        cmd3 = R"grep '^admin_space_left_action =' /etc/audit/auditd.conf"
+
+        r1 = self._shellexec(cmd1)
+        r2 = self._shellexec(cmd2)
+        r3 = self._shellexec(cmd3)
+
+        if r1.stdout[0] != 'space_left_action = email':
+            state += 1
+
+        if r2.stdout[0] != 'action_mail_acct = root':
+            state += 2
+
+        if r3.stdout[0] != 'admin_space_left_action = halt':
+            state += 4
+
+        return state
+
+    def audit_gdm_login_banner_configured(self) -> int:
+        state = 0
+
+        if self.audit_package_is_installed(package="gdm") == 0:
+            ## Test contents of /etc/dconf/profile/gdm if it exists
+            file = "/etc/dconf/profile/gdm"
+            if os.path.exists(file):
+                with open(file) as f:
+                    contents = f.read()
+                    if "user-db:user" not in contents:
+                        state += 2
+                    if "system-db:gdm" not in contents:
+                        state += 4
+                    if "file-db:/usr/share/gdm/greeter-dconf-defaults" not in contents:
+                        state += 8
+            else:
+                state += 1
+
+            ## Test contents of /etc/dconf/db/gdm.d/01-banner-message, if it exists
+            file = "/etc/dconf/db/gdm.d/01-banner-message"
+            if os.path.exists(file):
+                with open(file) as f:
+                    contents = f.read()
+                    if "[org/gnome/login-screen]\nbanner-message-enable=true\nbanner-message-text=" not in contents:
+                        state += 32
+            else:
+                state += 16
+        else:
+            state = -2
+
+        return state
+
+    def audit_ntp_is_configured(self) -> int:
+        state = 0
+
+        cmd = R"systemctl is-enabled ntpd"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "enabled":
+            state += 1
+
+        cmd = R"systemctl is-active ntpd"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "active":
+            state += 2
+
+        cmd = R'grep -E "^(server|pool)" /etc/ntp.conf'
+        r = self._shellexec(cmd)
+        if r.stdout[0] == "":
+            state += 4
+
+        cmd = R'grep "^restrict.*default" /etc/ntp.conf'
+        r = self._shellexec(cmd)
+        options = ["kod", "nomodify", "notrap", "nopeer", "noquery"]
+        for option in options:
+            for line in r.stdout:
+                if option not in line:
+                    state += 8
+                    self.log.debug(f'Option "{option}" not in line "{line}"')
+                    break
+            else:
+                continue
+            break
+
+        cmd = R"ps aux | grep ntpd | grep -v grep"
+        r = self._shellexec(cmd)
+        if "-u ntp:ntp" not in r.stdout[0]:
+            state += 16
+
+        return state
+
     ### linux independent end
     def audit_etc_passwd_accounts_use_shadowed_passwords(self) -> int:
         """audit_etc_passwd_accounts_use_shadowed_passwords _summary_
@@ -1663,38 +1894,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_gdm_login_banner_configured(self) -> int:
-        state = 0
-
-        if self.audit_package_is_installed(package="gdm") == 0:
-            ## Test contents of /etc/dconf/profile/gdm if it exists
-            file = "/etc/dconf/profile/gdm"
-            if os.path.exists(file):
-                with open(file) as f:
-                    contents = f.read()
-                    if "user-db:user" not in contents:
-                        state += 2
-                    if "system-db:gdm" not in contents:
-                        state += 4
-                    if "file-db:/usr/share/gdm/greeter-dconf-defaults" not in contents:
-                        state += 8
-            else:
-                state += 1
-
-            ## Test contents of /etc/dconf/db/gdm.d/01-banner-message, if it exists
-            file = "/etc/dconf/db/gdm.d/01-banner-message"
-            if os.path.exists(file):
-                with open(file) as f:
-                    contents = f.read()
-                    if "[org/gnome/login-screen]\nbanner-message-enable=true\nbanner-message-text=" not in contents:
-                        state += 32
-            else:
-                state += 16
-        else:
-            state = -2
-
-        return state
-
     def audit_gpgcheck_is_activated(self) -> int:
         state = 0
 
@@ -1742,135 +1941,6 @@ class Centos7Audit(LinuxIndependentAudit):
             if self.audit_file_permissions(homedir, '0750') != 0:
                 state = 1
                 self.log.warning(f'Homedir {homedir} is not 0750 or more restrictive')
-
-        return state
-
-    def audit_iptables_default_deny_policy(self, ip_version: str) -> int:
-        state = 0
-
-        if ip_version == 'ipv4':
-            cmd1 = 'iptables -S INPUT'
-            cmd2 = 'iptables -S FORWARD'
-            cmd3 = 'iptables -S OUTPUT'
-        elif ip_version == 'ipv6':
-            cmd1 = 'ip6tables -S INPUT'
-            cmd2 = 'ip6tables -S FORWARD'
-            cmd3 = 'ip6tables -S OUTPUT'
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-        r3 = self._shellexec(cmd3)
-
-        if r1.stdout[0] != '-P INPUT DROP':
-            state += 1
-
-        if r2.stdout[0] != '-P FORWARD DROP':
-            state += 2
-
-        if r3.stdout[0] != '-P OUTPUT DROP':
-            state += 4
-
-        return state
-
-    def audit_iptables_is_flushed(self) -> int:
-        state = 0
-
-        cmd = R"iptables -S | grep -v -- -P"
-        r = self._shellexec(cmd)
-        if r.stdout != ['']:
-            state += 1
-
-        cmd = R"ip6tables -S | grep -v -- -P"
-        r = self._shellexec(cmd)
-        if r.stdout != ['']:
-            state += 2
-
-        return state
-
-    def audit_iptables_loopback_is_configured(self, ip_version: str) -> int:
-        state = 0
-
-        if ip_version == 'ipv4':
-            cmd1 = "iptables -S INPUT"
-            cmd2 = "iptables -S OUTPUT"
-        elif ip_version == 'ipv6':
-            cmd1 = "ip6tables -S INPUT"
-            cmd2 = "ip6tables -S OUTPUT"
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        self.log.debug(r1)
-        self.log.debug(r2)
-
-        if len(r1.stdout) < 2 or r1.stdout[1] != '-A INPUT -i lo -j ACCEPT':
-            state += 1
-
-        if ip_version == 'ipv4':
-            if len(r1.stdout) < 3 or r1.stdout[2] != '-A INPUT -s 127.0.0.0/8 -j DROP':
-                state += 2
-        elif ip_version == 'ipv6':
-            if len(r1.stdout) < 3 or r1.stdout[2] != '-A INPUT -s ::1/128 -j DROP':
-                state += 2
-
-        if len(r2.stdout) < 2 or r2.stdout[1] != '-A OUTPUT -o lo -j ACCEPT':
-            state += 4
-
-        return state
-
-    def audit_iptables_outbound_and_established_connections(self, ip_version: str) -> int:
-        state = 0
-
-        if ip_version == 'ipv4':
-            cmd = R"iptables -S"
-        elif ip_version == 'ipv6':
-            cmd = R"ip6tables -S"
-
-        r = self._shellexec(cmd)
-
-        self.log.debug(r)
-
-        if '-A INPUT -p tcp -m state --state ESTABLISHED -j ACCEPT' not in r.stdout:
-            state += 1
-
-        if '-A INPUT -p udp -m state --state ESTABLISHED -j ACCEPT' not in r.stdout:
-            state += 2
-
-        if '-A INPUT -p icmp -m state --state ESTABLISHED -j ACCEPT' not in r.stdout:
-            state += 4
-
-        if '-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED -j ACCEPT' not in r.stdout:
-            state += 8
-
-        if '-A OUTPUT -p udp -m state --state NEW,ESTABLISHED -j ACCEPT' not in r.stdout:
-            state += 16
-
-        if '-A OUTPUT -p icmp -m state --state NEW,ESTABLISHED -j ACCEPT' not in r.stdout:
-            state += 32
-
-        return state
-
-    def audit_iptables_rules_are_saved(self, ip_version: str) -> int:
-        if ip_version == 'ipv4':
-            # cmd = R"diff -qs -y <(iptables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort) <(grep -v '^#' /etc/sysconfig/iptables | sed 's/\[[0-9]*:[0-9]*\]//' | sort)"
-            cmd1 = R"iptables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
-            cmd2 = R"grep -v '^#' /etc/sysconfig/iptables | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
-        elif ip_version == 'ipv6':
-            # cmd = R"diff -qs -y <(ip6tables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort) <(grep -v '^#' /etc/sysconfig/ip6tables | sed 's/\[[0-9]*:[0-9]*\]//' | sort)"
-            cmd1 = R"ip6tables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
-            cmd2 = R"grep -v '^#' /etc/sysconfig/ip6tables | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
-
-        # r = self._shellexec(cmd)
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        self.log.debug(r1)
-        self.log.debug(r2)
-
-        if r1.returncode == 0 and r2.returncode == 0 and r1.stdout == r2.stdout:
-            state = 0
-        else:
-            state = 1
 
         return state
 
@@ -2067,54 +2137,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_ntp_is_configured(self) -> int:
-        state = 0
-
-        cmd = R"systemctl is-enabled ntpd"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "enabled":
-            state += 1
-
-        cmd = R"systemctl is-active ntpd"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "active":
-            state += 2
-
-        cmd = R'grep -E "^(server|pool)" /etc/ntp.conf'
-        r = self._shellexec(cmd)
-        if r.stdout[0] == "":
-            state += 4
-
-        cmd = R'grep "^restrict.*default" /etc/ntp.conf'
-        r = self._shellexec(cmd)
-        options = ["kod", "nomodify", "notrap", "nopeer", "noquery"]
-        for option in options:
-            for line in r.stdout:
-                if option not in line:
-                    state += 8
-                    self.log.debug(f'Option "{option}" not in line "{line}"')
-                    break
-            else:
-                continue
-            break
-
-        cmd = R"ps aux | grep ntpd | grep -v grep"
-        r = self._shellexec(cmd)
-        if "-u ntp:ntp" not in r.stdout[0]:
-            state += 16
-
-        return state
-
-    def audit_nxdx_support_enabled(self) -> int:
-        state = 0
-        cmd = R'dmesg | grep "protection: active"'
-        r = self._shellexec(cmd)
-
-        if "protection: active" not in r.stdout[0]:
-            state += 1
-
-        return state
-
     def audit_only_one_package_is_installed(self, packages: str) -> int:
         ### Similar to audit_package_is_installed but requires one of many (xor) package is installed
         cmd = f'rpm -q {packages} | grep -v "not installed"'
@@ -2191,117 +2213,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_password_change_minimum_delay(self, expected_min_days: int = 1) -> int:
-        state = 0
-
-        cmd1 = R"grep ^\s*PASS_MIN_DAYS /etc/login.defs"
-        cmd2 = R"grep -E '^[^:]+:[^!*]' /etc/shadow | cut -d: -f1,4"
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        if not int(r1.stdout[0].split()[1]) >= expected_min_days:
-            state += 1
-
-        for line in r2.stdout:
-            if line != '':
-                days = line.split(':')[1]
-                if not int(days) >= expected_min_days:
-                    state += 2
-                    break
-
-        return state
-
-    def audit_password_expiration_max_days_is_configured(self, expected_max_days: int = 365) -> int:
-        state = 0
-
-        cmd1 = R"grep ^\s*PASS_MAX_DAYS /etc/login.defs"
-        cmd2 = R"grep -E '^[^:]+:[^!*]' /etc/shadow | cut -d: -f1,5"
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        if not int(r1.stdout[0].split()[1]) <= expected_max_days:
-            state += 1
-
-        for line in r2.stdout:
-            if line != '':
-                days = line.split(':')[1]
-                if not int(days) <= expected_max_days:
-                    state += 2
-                    break
-
-        return state
-
-    def audit_password_expiration_warning_is_configured(self, expected_warn_days: int = 7) -> int:
-        state = 0
-
-        cmd1 = R"grep ^\s*PASS_WARN_AGE /etc/login.defs"
-        cmd2 = R"grep -E '^[^:]+:[^!*]' /etc/shadow | cut -d: -f1,6"
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        if not int(r1.stdout[0].split()[1]) >= expected_warn_days:
-            state += 1
-
-        for line in r2.stdout:
-            if line != '':
-                days = line.split(':')[1]
-                if not int(days) >= expected_warn_days:
-                    state += 2
-                    break
-
-        return state
-
-    def audit_password_hashing_algorithm(self) -> int:
-        state = 0
-        cmd = R"grep -P '^\h*password\h+(sufficient|requisite|required)\h+pam_unix\.so\h+([^#\n\r]+)?sha512(\h+.*)?$' /etc/pam.d/system-auth /etc/pam.d/password-auth"
-
-        r = self._shellexec(cmd)
-
-        if len(r.stdout) < 2:
-            state += 1
-
-        return state
-
-    def audit_password_inactive_lock_is_configured(self, expected_inactive_days: int = 30) -> int:
-        state = 0
-
-        cmd1 = R"useradd -D | grep INACTIVE"
-        cmd2 = R"grep -E '^[^:]+:[^!*]' /etc/shadow | cut -d: -f1,7"
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        if r1.stdout[0].split('=')[1]:
-            default_inactive_days = int(r1.stdout[0].split('=')[1])
-
-        if default_inactive_days == -1 or default_inactive_days > expected_inactive_days:
-            state += 1
-
-        for line in r2.stdout:
-            days = line.split(':')[1]
-
-            if days == '' or int(days) > expected_inactive_days:
-                state += 2
-                break
-
-        return state
-
-    def audit_password_reuse_is_limited(self) -> int:
-        state = 0
-        cmd1 = R"grep -P '^\s*password\s+(requisite|required)\s+pam_pwhistory\.so\s+([^#]+\s+)*remember=([5-9]|[1-9][0-9]+)\b' /etc/pam.d/system-auth /etc/pam.d/password-auth"
-        cmd2 = R"grep -P '^\s*password\s+(sufficient|requisite|required)\s+pam_unix\.so\s+([^#]+\s+)*remember=([5-9]|[1-9][0-9]+)\b' /etc/pam.d/system-auth /etc/pam.d/password-auth"
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        if len(r1.stdout) < 2 and len(r2.stdout) < 2:
-            state += 1
-
-        return state
-
     def audit_permissions_on_log_files(self) -> int:
         cmd = R'find /var/log -type f -perm /g+wx,o+rwx -exec ls -l {} \;'
         r = self._shellexec(cmd)
@@ -2310,52 +2221,6 @@ class Centos7Audit(LinuxIndependentAudit):
             state = 0
         else:
             state = 1
-
-        return state
-
-    def audit_permissions_on_private_host_key_files(self) -> int:
-        state = 0
-        counter = 0
-        files = []
-
-        ## Get HostKeys from sshd_config
-        cmd = R"/usr/sbin/sshd -T"
-        r = self._shellexec(cmd)
-
-        regex = re.compile(R'^hostkey\s')
-        for line in r.stdout:
-            if regex.match(line):
-                files.append(line.split()[1])
-
-        ## Check file permissions using audit_file_permissions()
-        for counter, file in enumerate(files):
-            result = self.audit_file_permissions(file=file, expected_user="root", expected_group="root", expected_mode="0600")
-
-            if result != 0:
-                state += 2**counter
-
-        return state
-
-    def audit_permissions_on_public_host_key_files(self) -> int:
-        state = 0
-        counter = 0
-        files = []
-
-        ## Get HostKeys from sshd_config
-        cmd = R"/usr/sbin/sshd -T"
-        r = self._shellexec(cmd)
-
-        regex = re.compile(R'^hostkey\s')
-        for line in r.stdout:
-            if regex.match(line):
-                files.append(line.split()[1])
-
-        ## Check file permissions using audit_file_permissions()
-        for counter, file in enumerate(files):
-            result = self.audit_file_permissions(file=file + '.pub', expected_user="root", expected_group="root", expected_mode="0644")
-
-            if result != 0:
-                state += 2**counter
 
         return state
 
@@ -2370,16 +2235,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
                 if r.stdout[0] != "":
                     state = 1
-
-        return state
-
-    def audit_root_is_only_uid_0_account(self) -> int:
-        state = 0
-        cmd = R"awk -F: '($3 == 0) { print $1 }' /etc/passwd"
-        r = self._shellexec(cmd)
-
-        if r.stdout != ['root']:
-            state += 1
 
         return state
 
@@ -2493,31 +2348,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_service_is_enabled(self, service: str) -> int:
-        state = 0
-
-        cmd = f'systemctl is-enabled {service}'
-        r = self._shellexec(cmd)
-        if r.stdout[0] != 'enabled':
-            state += 1
-
-        return state
-
-    def audit_service_is_enabled_and_is_active(self, service: str) -> int:
-        state = 0
-
-        cmd = f'systemctl is-enabled {service}'
-        r = self._shellexec(cmd)
-        if r.stdout[0] != 'enabled':
-            state += 1
-
-        cmd = f'systemctl is-active {service}'
-        r = self._shellexec(cmd)
-        if r.stdout[0] != 'active':
-            state += 2
-
-        return state
-
     def audit_service_is_masked(self, service) -> int:
         state = 0
 
@@ -2528,65 +2358,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         if r.stdout[0] != 'masked':
             state += 1
-
-        return state
-
-    def audit_shadow_group_is_empty(self) -> int:
-        state = 0
-        cmd = R"awk -F: '/^shadow:/ {print $4}' /etc/group"
-        r = self._shellexec(cmd)
-
-        if r.stdout[0] != '':
-            state += 1
-
-        gid = shellexec("awk -F: '/^shadow:/ {print $3}' /etc/group").stdout[0]
-
-        cmd = f"awk -F: '($4 == \"{gid}\") {{print $1}}' /etc/passwd"
-        r = self._shellexec(cmd)
-        if r.stdout != ['']:
-            state += 2
-
-        return state
-
-    def audit_sshd_config_option(self, parameter: str, expected_value: str, comparison: str = "eq") -> int:
-        state = 0
-        cmd = R"/usr/sbin/sshd -T"
-        r = self._shellexec(cmd)
-
-        ## Fail check if the config test fails because we can't trust the config file is correct
-        if r.returncode != 0:
-            state += 1
-
-        ## Check if the parameter in the sshd_config file matches the expected_value
-        for line in r.stdout:
-            if line.startswith(parameter):
-                ## I didn't know of a better way of doing this
-                if comparison == 'eq':
-                    if not line.split()[1] == expected_value:
-                        state += 2
-
-                elif comparison == 'ne':
-                    if not line.split()[1] != expected_value:
-                        state += 2
-
-                elif comparison == 'ge':
-                    if not int(line.split()[1]) >= int(expected_value):
-                        state += 2
-
-                elif comparison == 'gt':
-                    if not int(line.split()[1]) > int(expected_value):
-                        state += 2
-
-                elif comparison == 'le':
-                    if not int(line.split()[1]) <= int(expected_value):
-                        state += 2
-
-                elif comparison == 'lt':
-                    if not int(line.split()[1]) < int(expected_value):
-                        state += 2
-
-                ## No need to keep checking the other lines, so we break the loop
-                break
 
         return state
 
@@ -2635,51 +2406,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
             if r.stdout != [f'{flag} = {value}']:
                 state += 2 ** (i * 2 + 1)
-
-        return state
-
-    def audit_system_accounts_are_secured(self) -> int:
-        ignored_users = ['root', 'sync', 'shutdown', 'halt']
-        uid_min = int(self._shellexec(R"awk '/^\s*UID_MIN/ {print $2}' /etc/login.defs").stdout[0])
-        valid_shells = ['/sbin/nologin', '/bin/false']
-        state = 0
-
-        passwd_file = self._shellexec('cat /etc/passwd').stdout
-
-        for line in passwd_file:
-            if line != '':
-                user = line.split(':')[0]
-                uid = int(line.split(':')[2])
-                shell = line.split(':')[6]
-
-                if user not in ignored_users and uid < uid_min:
-                    if shell not in valid_shells:
-                        state = 1
-
-        self.log.debug(f'uid_min = {uid_min}')
-        self.log.debug(f'{passwd_file}')
-
-        return state
-
-    def audit_system_is_disabled_when_audit_logs_are_full(self) -> int:
-        state = 0
-
-        cmd1 = R"grep '^space_left_action =' /etc/audit/auditd.conf"
-        cmd2 = R"grep '^action_mail_acct =' /etc/audit/auditd.conf"
-        cmd3 = R"grep '^admin_space_left_action =' /etc/audit/auditd.conf"
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-        r3 = self._shellexec(cmd3)
-
-        if r1.stdout[0] != 'space_left_action = email':
-            state += 1
-
-        if r2.stdout[0] != 'action_mail_acct = root':
-            state += 2
-
-        if r3.stdout[0] != 'admin_space_left_action = halt':
-            state += 4
 
         return state
 

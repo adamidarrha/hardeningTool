@@ -27,11 +27,11 @@ This repo provides an unofficial, standalone, zero-install, zero-dependency, Pyt
 ### How do I use this?
 #### Download:
 
-    curl -LO https://raw.githubusercontent.com/finalduty/cis_benchmarks_audit/main/cis_audit.py && chmod 750 cis_audit.py
+    git clone https://github.com/adamidarrha/hardeningTool
 
 #### Run
 ```
-#usage: cis_audit.py [-h] [--level {1,2}] [--include INCLUDES [INCLUDES ...]]
+#usage: python3 mainProgram.py [-h] [--level {1,2}] [--include INCLUDES [INCLUDES ...]]
                     [--exclude EXCLUDES [EXCLUDES ...]]
                     [-l {DEBUG,INFO,WARNING,CRITICAL}] [--debug] [--nice]
                     [--no-nice] [--no-colour]
@@ -40,6 +40,7 @@ This repo provides an unofficial, standalone, zero-install, zero-dependency, Pyt
                     [--text] [--json] [--csv] [--psv] [--tsv] [-V] [-c CONFIG]
 
 This script runs tests on the system to check for compliance against the CIS Benchmarks. No changes are made to system files by this script.
+it automatically checks for operating system and distribution and applies the benchmark if found.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -73,25 +74,25 @@ optional arguments:
 Examples:
     
     Run with debug enabled:
-    ./cis_audit.py --debug
+    python3 mainProgram.py --debug
         
     Exclude tests from section 1.1 and 1.3.2:
-    ./cis_audit.py --exclude 1.1 1.3.2
+    python3 mainProgram.py --exclude 1.1 1.3.2
         
     Include tests only from section 4.1 but exclude tests from section 4.1.1:
-    ./cis_audit.py --include 4.1 --exclude 4.1.1
+    python3 mainProgram.py --include 4.1 --exclude 4.1.1
         
     Run only level 1 tests
-    ./cis_audit.py --level 1
+    python3 mainProgram.py --level 1
         
     Run level 1 tests and include some but not all SELinux questions
-    ./cis_audit.py --level 1 --include 1.6 --exclude 1.6.1.2
+    python3 mainProgram.py --level 1 --include 1.6 --exclude 1.6.1.2
 
 ```
 
 ### Example Results
 ```
-# ./cis-audit.sh --include 5.2
+# python3 mainProgram.py --include 5.2
 [00:00:01] (✓) 14 of 14 tests completed 
 
  CIS CentOS 7 Benchmark v2.2.0 Results 
@@ -125,6 +126,8 @@ Passed 13 of 15 tests in 1 seconds (1 Skipped, 0 Errors)
 OS|Benchmark Versions|Python Version
 ---|---|---
 CentOS 7|3.1.2|3.6
+---|---|---
+DistributionlinuxIndependent|2.0.0|3.6
 
 
 ### Caveats
@@ -132,10 +135,27 @@ CentOS 7|3.1.2|3.6
 Use of the CIS Benchmarks are subject to the [Terms of Use for Non-Member CIS Products](https://www.cisecurity.org/terms-of-use-for-non-member-cis-products)
 
 
-#### CentOS 7 & Python 3
+#### Python 3
+##### CentOS 7
 Whilst this repo intends to follow a zero dependency approach, it is not practical to support Python 2.7, which is what is installed by default on CentOS 7. You can however easily install Python 3.6 via yum, which I hope is ok for your environment:
 ```
 $ sudo yum install python3 -y
+```
+##### Ubuntu or Debian
+```
+$ sudo apt-get install python3
+```
+##### Fedora
+```
+$ sudo dnf install python3
+```
+##### Arch Linux
+```
+$sudo pacman -S python
+```
+##### openSUSE
+```
+$ sudo zypper install python3
 ```
 
 ### Disclaimer
