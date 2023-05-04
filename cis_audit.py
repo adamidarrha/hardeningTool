@@ -1528,13 +1528,22 @@ class LinuxIndependentAudit(CISAudit):
 
         return state
     
+    def audit_sysctl_flags_are_set(self, flags: "list[str]", value: int) -> int:
+        state = 0
 
-class Centos7Audit(LinuxIndependentAudit):
-    def __init__(self, config=None):
-        super().__init__(config)
+        for i, flag in enumerate(flags):
+            cmd = f'sysctl {flag}'
+            r = self._shellexec(cmd)
+            if r.stdout[0] != f'{flag} = {value}':
+                state += 2 ** (i * 2)
 
-    ### linux independent start
+            cmd = f'grep -h "{flag}" /etc/sysctl.conf /etc/sysctl.d/*.conf'
+            r = self._shellexec(cmd)
 
+            if r.stdout != [f'{flag} = {value}']:
+                state += 2 ** (i * 2 + 1)
+
+        return state
     def audit_iptables_default_deny_policy(self, ip_version: str) -> int:
         state = 0
 
@@ -1562,20 +1571,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_iptables_is_flushed(self) -> int:
-        state = 0
-
-        cmd = R"iptables -S | grep -v -- -P"
-        r = self._shellexec(cmd)
-        if r.stdout != ['']:
-            state += 1
-
-        cmd = R"ip6tables -S | grep -v -- -P"
-        r = self._shellexec(cmd)
-        if r.stdout != ['']:
-            state += 2
-
-        return state
 
     def audit_iptables_loopback_is_configured(self, ip_version: str) -> int:
         state = 0
@@ -1639,6 +1634,49 @@ class Centos7Audit(LinuxIndependentAudit):
             state += 32
 
         return state
+        
+    def audit_system_is_disabled_when_audit_logs_are_full(self) -> int:
+        state = 0
+
+        cmd1 = R"grep '^space_left_action =' /etc/audit/auditd.conf"
+        cmd2 = R"grep '^action_mail_acct =' /etc/audit/auditd.conf"
+        cmd3 = R"grep '^admin_space_left_action =' /etc/audit/auditd.conf"
+
+        r1 = self._shellexec(cmd1)
+        r2 = self._shellexec(cmd2)
+        r3 = self._shellexec(cmd3)
+
+        if r1.stdout[0] != 'space_left_action = email':
+            state += 1
+
+        if r2.stdout[0] != 'action_mail_acct = root':
+            state += 2
+
+        if r3.stdout[0] != 'admin_space_left_action = halt':
+            state += 4
+
+        return state
+
+class Centos7Audit(LinuxIndependentAudit):
+    def __init__(self, config=None):
+        super().__init__(config)
+
+    ### linux independent start
+
+    def audit_iptables_is_flushed(self) -> int:
+        state = 0
+
+        cmd = R"iptables -S | grep -v -- -P"
+        r = self._shellexec(cmd)
+        if r.stdout != ['']:
+            state += 1
+
+        cmd = R"ip6tables -S | grep -v -- -P"
+        r = self._shellexec(cmd)
+        if r.stdout != ['']:
+            state += 2
+
+        return state
 
     def audit_iptables_rules_are_saved(self, ip_version: str) -> int:
         if ip_version == 'ipv4':
@@ -1674,27 +1712,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_system_is_disabled_when_audit_logs_are_full(self) -> int:
-        state = 0
-
-        cmd1 = R"grep '^space_left_action =' /etc/audit/auditd.conf"
-        cmd2 = R"grep '^action_mail_acct =' /etc/audit/auditd.conf"
-        cmd3 = R"grep '^admin_space_left_action =' /etc/audit/auditd.conf"
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-        r3 = self._shellexec(cmd3)
-
-        if r1.stdout[0] != 'space_left_action = email':
-            state += 1
-
-        if r2.stdout[0] != 'action_mail_acct = root':
-            state += 2
-
-        if r3.stdout[0] != 'admin_space_left_action = halt':
-            state += 4
-
-        return state
 
     def audit_gdm_login_banner_configured(self) -> int:
         state = 0
@@ -2389,23 +2406,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         if r.stdout[0] != 'Defaults logfile="/var/log/sudo.log"':
             state += 1
-
-        return state
-
-    def audit_sysctl_flags_are_set(self, flags: "list[str]", value: int) -> int:
-        state = 0
-
-        for i, flag in enumerate(flags):
-            cmd = f'sysctl {flag}'
-            r = self._shellexec(cmd)
-            if r.stdout[0] != f'{flag} = {value}':
-                state += 2 ** (i * 2)
-
-            cmd = f'grep -h "{flag}" /etc/sysctl.conf /etc/sysctl.d/*.conf'
-            r = self._shellexec(cmd)
-
-            if r.stdout != [f'{flag} = {value}']:
-                state += 2 ** (i * 2 + 1)
 
         return state
 
