@@ -126,7 +126,6 @@ Passed 13 of 15 tests in 1 seconds (1 Skipped, 0 Errors)
 OS|Benchmark Versions|Python Version
 ---|---|---
 CentOS 7|3.1.2|3.6
----|---|---
 DistributionlinuxIndependent|2.0.0|3.6
 
 
