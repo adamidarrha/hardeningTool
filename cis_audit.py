@@ -10,6 +10,7 @@
 # Use of the CIS Benchmarks are subject to the Terms of Use for Non-Member CIS Products - https://www.cisecurity.org/terms-of-use-for-non-member-cis-products
 
 ### Imports ###
+import platform # https://docs.python.org/3/library/platform.html
 import json  # https://docs.python.org/3/library/json.html
 import logging  # https://docs.python.org/3/library/logging.html
 import os  # https://docs.python.org/3/library/os.html
@@ -20,8 +21,9 @@ import subprocess  # https://docs.python.org/3/library/subprocess.html
 from datetime import (
     datetime,  # https://docs.python.org/3/library/datetime.html#datetime.datetime
 )
-#from grp import getgrgid  # https://docs.python.org/3/library/grp.html#grp.getgrgid
-#from pwd import getpwuid  # https://docs.python.org/3/library/pwd.html#pwd.getpwuid
+if platform.system() == "Linux":
+    from grp import getgrgid  # https://docs.python.org/3/library/grp.html#grp.getgrgid
+    from pwd import getpwuid  # https://docs.python.org/3/library/pwd.html#pwd.getpwuid
 from types import (
     SimpleNamespace,  # https://docs.python.org/3/library/types.html#types.SimpleNamespace
 )
