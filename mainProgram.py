@@ -1,8 +1,8 @@
 from Benchmarks import benchmarks
 from cis_audit import Centos7Audit
 from cis_audit import LinuxIndependentAudit
-import distro
-import platform
+import distro # https://docs.python.org/3/library/distro.html
+import platform # https://docs.python.org/3/library/platform.html
 import logging  # https://docs.python.org/3/library/logging.html
 import sys  # https://docs.python.org/3/library/sys.html
 import os  # https://docs.python.org/3/library/os.html
@@ -12,7 +12,7 @@ from argparse import (
 from argparse import (
     RawTextHelpFormatter,  # https://docs.python.org/3/library/argparse.html#argparse.RawTextHelpFormatter
 )
-__version__ = '0.20.0-alpha.3'
+__version__ = '0.20.0-alpha.3.1'
 
 ## Script Functions ##
 def main():  # pragma: no cover
