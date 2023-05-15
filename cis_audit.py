@@ -20,8 +20,8 @@ import subprocess  # https://docs.python.org/3/library/subprocess.html
 from datetime import (
     datetime,  # https://docs.python.org/3/library/datetime.html#datetime.datetime
 )
-from grp import getgrgid  # https://docs.python.org/3/library/grp.html#grp.getgrgid
-from pwd import getpwuid  # https://docs.python.org/3/library/pwd.html#pwd.getpwuid
+#from grp import getgrgid  # https://docs.python.org/3/library/grp.html#grp.getgrgid
+#from pwd import getpwuid  # https://docs.python.org/3/library/pwd.html#pwd.getpwuid
 from types import (
     SimpleNamespace,  # https://docs.python.org/3/library/types.html#types.SimpleNamespace
 )
@@ -1427,106 +1427,6 @@ class LinuxIndependentAudit(CISAudit):
             state += 2
 
         return state
-
-    def audit_file_permissions(self, file: str, expected_mode: str, expected_user: str = None, expected_group: str = None) -> int:
-        """Check that a file's ownership matches the expected_user and expected_group, and that the file's permissions match or are more restrictive than the expected_mode.
-
-        Parameters
-        ----------
-        test_id: str, required
-            The ID of the recommendation to be tested, per the CIS Benchmarks
-
-        file: str, required
-            The file to be tested
-
-        expected_user: str, required
-            The expected user for the file
-
-        expected_group: str, required
-            The expected group membership for the file
-
-        expected_mode: str, required
-            The octal file mode that the file should not exceed. e.g. 2750, 664, 0400.
-
-        Response
-        --------
-        int:
-            Exit state for tests as a sum of individual failures:
-            -1 >= Error
-             0 == Pass
-             1 <= Fail
-
-        """
-        """
-            When looping over each of the permission bits. If the bits do not match or are not more restrictive, increment the failure state value by a unique amount, per below. This allows us to determine from the return value, which permissions did not match:
-
-              index | penalty | description
-             -------|---------|-------------
-                -   |   1     | User did not match
-                -   |   2     | Group did not match
-                0   |   4     | SetUID bit did not match
-                1   |   8     | SetGID bit did not match
-                2   |   16    | Sticky bit did not match
-                3   |   32    | User Read bit did not match
-                4   |   64    | User Write bit did not match
-                5   |   128   | User Execute bit did not match
-                6   |   256   | Group Read bit did not match
-                7   |   512   | Group Write bit did not match
-                8   |   1024  | Group Execute bit did not match
-                9   |   2048  | Other Read bit did not match
-                10  |   4096  | Other Write bit did not match
-                11  |   8192  | Other Execute bit did not match
-        """
-        state = 0
-
-        ## Convert expected_mode to binary string
-        if len(expected_mode) in [3, 4]:
-            if expected_mode[0] == '0':
-                expected_mode = expected_mode[-3:]  # Strip leading zero otherwise it can break things, e.g. 0750 -> 750
-        else:
-            raise ValueError(f'The "expected_mode" for {file} should be 3 or 4 characters long, not {len(expected_mode)}')
-        octal_expected_mode = oct(int(expected_mode, 8))  # Convert octal (base8) file mode to decimal (base10)
-        binary_expected_mode = str(format(int(octal_expected_mode, 8), '012b'))  # Convert decimal (base10) to binary (base2) for bit-by-bit comparison
-
-        ## Get file stats and user/group
-        try:
-            file_stat = os.stat(file)
-        except Exception as e:
-            self.log.warning(f'Error trying to stat file {file}: "{e}"')
-            return -1
-
-        file_user = getpwuid(file_stat.st_uid).pw_name
-        file_group = getgrgid(file_stat.st_gid).gr_name
-
-        ## Convert file_mode to binary string
-        file_mode = int(stat.S_IMODE(file_stat.st_mode))
-        octal_file_mode = oct(file_mode)
-        binary_file_mode = str(format(int(file_mode), '012b'))
-
-        if expected_user is not None:
-            ## Set fail state if user does not match expectation
-            if file_user != expected_user:
-                state += 1
-                self.log.debug(f'Test failure: file_user "{file_user}" for {file} did not match expected_user "{expected_user}"')
-
-        if expected_group is not None:
-            ## Set fail state if group does not match expecation
-            if file_group != expected_group:
-                state += 2
-                self.log.debug(f'Test failure: file_group "{file_group}" for {file} did not match expected_group "{expected_group}"')
-
-        ## Iterate over all bits in the binary_file_mode to ensure they're equal to, or more restrictive than, the expected_mode. Refer to the table in the description above for what the individual 'this_failure_score' values refer to.
-        for i in range(len(binary_file_mode)):
-            if binary_expected_mode[i] == '0':
-                if binary_file_mode[i] != '0':
-                    ## Add unique state so we can identify which bit a permission failed on, for debugging
-                    this_failure_score = 2 ** (i + 2)
-                    state += this_failure_score
-                    self.log.debug(f'Test comparison for {file}, {octal_expected_mode}>={octal_file_mode} {binary_expected_mode[i]} == {binary_file_mode[i]}. Failed at index {i}. Adding {this_failure_score} to state')
-                else:
-                    self.log.debug(f'Test comparison for {file}, {octal_expected_mode}>={octal_file_mode} {binary_expected_mode[i]} == {binary_file_mode[i]}. Passed at index {i}')
-
-        return state
     
     def audit_sysctl_flags_are_set(self, flags: "list[str]", value: int) -> int:
         state = 0
@@ -1576,24 +1476,266 @@ class LinuxIndependentAudit(CISAudit):
 
         return state
 
-class Centos7Audit(LinuxIndependentAudit):
-    def __init__(self, config=None):
-        super().__init__(config)
+#here
+    def audit_partition_option_is_set(self, partition: str, option: str) -> int:
+        state = 1
+        cmd = Rf'mount | grep -E "\s{partition}\s" | grep {option}'
+        r = self._shellexec(cmd)
 
-    ### linux independent start
+        if partition in r.stdout[0] and option in r.stdout[0]:
+            state = 0
 
-    def audit_iptables_is_flushed(self) -> int:
+        return state
+
+    def audit_removable_partition_option_is_set(self, option: str) -> int:
+        state = 0
+        removable_mountpoints = self._shellexec("lsblk -o RM,MOUNTPOINT | awk '/1/ {print $2}'").stdout
+
+        for mountpoint in removable_mountpoints:  # pragma: no cover
+            if mountpoint != "":
+                cmd = Rf'findmnt -n "{mountpoint}" | grep -Ev "\b{option}\b"'
+                r = self._shellexec(cmd)
+
+                if r.stdout[0] != "":
+                    state = 1
+
+        return state
+
+    def audit_sticky_bit_on_world_writable_dirs(self) -> int:
+        cmd = R"df --local -P 2> /dev/null | awk '{if (NR!=1) print $6}' | xargs -I '{}' find '{}' -xdev -type d \( -perm -0002 -a ! -perm -1000 \)"
+        r = self._shellexec(cmd)
+
+        if r.returncode == 0 and r.stdout[0] == '':
+            state = 0
+        elif r.returncode == 0 and r.stdout[0] != '':
+            state = 1
+
+        return state
+
+    def audit_service_is_disabled(self, service: str) -> int:
         state = 0
 
-        cmd = R"iptables -S | grep -v -- -P"
+        cmd = f'systemctl is-enabled {service}'
         r = self._shellexec(cmd)
-        if r.stdout != ['']:
+        if r.stdout[0] != 'disabled':
             state += 1
 
-        cmd = R"ip6tables -S | grep -v -- -P"
+        return state
+
+    def audit_kernel_module_is_disabled(self, module: str) -> int:
+        state = 0
+        cmd1 = f'modprobe -n -v {module}'
+        cmd2 = f'lsmod | grep {module}'
+
+        r1 = self._shellexec(cmd1)
+        r2 = self._shellexec(cmd2)
+
+        if r1.stdout[0] == 'install /bin/true ':
+            pass
+        elif r1.stderr[0] == f'modprobe: FATAL: Module {module} not found.':
+            pass
+        else:
+            state = 1
+
+        if module in r2.stdout[0]:
+            state = 2
+
+        return state
+
+    def audit_package_is_installed(self, package: str) -> int:
+        cmd = f'rpm -q {package}'
         r = self._shellexec(cmd)
-        if r.stdout != ['']:
+
+        self.log.debug(f"'{cmd}', '{r}'")
+
+        if r.returncode != 0:
+            state = 1
+        else:
+            state = 0
+
+        return state
+    
+    def audit_filesystem_integrity_regularly_checked(self) -> int:
+        state = 1
+
+        cmd = R"grep -Ers '^([^#]+\s+)?(\/usr\/s?bin\/|^\s*)aide(\.wrapper)?\s(--?\S+\s)*(--(check|update)|\$AIDEARGS)\b' /etc/cron.* /etc/crontab /var/spool/cron/root /etc/anacrontab"
+        r = self._shellexec(cmd)
+
+        if r.stdout[0] != '':
+            state = 0
+
+        else:
+            cmd1 = 'systemctl is-enabled aidecheck.service'
+            cmd2 = 'systemctl is-enabled aidecheck.timer'
+            cmd3 = 'systemctl is-active aidecheck.timer'
+
+            r1 = self._shellexec(cmd1)
+            r2 = self._shellexec(cmd2)
+            r3 = self._shellexec(cmd3)
+
+            if all(
+                [
+                    r1.stdout[0] == 'enabled',
+                    r2.stdout[0] == 'enabled',
+                    r3.stdout[0] == 'active',
+                ]
+            ):
+                state = 0
+
+        return state
+
+    def audit_nxdx_support_enabled(self) -> int:
+        state = 0
+        cmd = R'dmesg | grep "protection: active"'
+        r = self._shellexec(cmd)
+
+        if "protection: active" not in r.stdout[0]:
+            state += 1
+
+        return state
+
+    def audit_package_not_installed(self, package: str) -> int:
+        cmd = f'rpm -q {package}'
+        r = self._shellexec(cmd)
+
+        self.log.debug(f"'{cmd}', '{r}'")
+
+        if r.returncode == 1:
+            state = 0
+        else:
+            state = 1
+
+        return state
+
+    def audit_selinux_not_disabled_in_bootloader(self) -> int:
+        state = 0
+        file_paths = []
+        for dirpath, dirnames, filenames in os.walk('/boot/'):
+            if "grub.cfg" in filenames:
+                file_paths.append(dirpath)
+
+        if len(file_paths) == 0:
+            state = -1
+
+        else:
+            for i, path in enumerate(file_paths):
+                cmd = Rf'grep "^\s*linux" {path}/grub.cfg | grep -E "selinux=0|enforcing=0"'
+                r = self._shellexec(cmd)
+
+                if r.stdout != ['']:
+                    state += 2 ** (i + 1)
+
+        return state
+
+    def audit_selinux_policy_is_configured(self) -> int:
+        state = 0
+
+        cmd = R"awk -F= '/^SELINUXTYPE=/ {print $2}' /etc/selinux/config"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "targeted":
+            state += 1
+
+        cmd = R"sestatus | awk -F: '/Loaded policy/ {print $2}' | sed 's/\s*//'"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "targeted":
             state += 2
+
+        return state
+
+    def audit_updates_installed(self) -> int:
+        cmd = R'yum -q check-update'
+        r = self._shellexec(cmd)
+
+        ## From man 8 yum
+        ## Returns exit value of 100 if there are packages available for an update. Also returns a list of the packages to be updated in list format.
+        ## Returns 0 if no packages are available for update.
+        ## Returns 1 if an error occurred.
+
+        if r.returncode == 0:
+            state = 0
+        elif r.returncode == 1:
+            state = -1
+        elif r.returncode == 100:
+            state = 1
+
+        return state
+
+    def audit_only_one_package_is_installed(self, packages: str) -> int:
+        ### Similar to audit_package_is_installed but requires one of many (xor) package is installed
+        cmd = f'rpm -q {packages} | grep -v "not installed"'
+        r = self._shellexec(cmd)
+
+        ## e.g. print(r.stdout) will show:
+        ##  ['chrony-3.4-1.el7.x86_64']
+        ##  ['chrony-3.4-1.el7.x86_64', 'ntp-4.2.6p5-29.el7.centos.2.x86_64']
+
+        if len(r.stdout) == 1 and r.stdout != ['']:
+            state = 0
+        else:
+            state = 1
+
+        return state
+
+    def audit_ntp_is_configured(self) -> int:
+        state = 0
+
+        cmd = R"systemctl is-enabled ntpd"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "enabled":
+            state += 1
+
+        cmd = R"systemctl is-active ntpd"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "active":
+            state += 2
+
+        cmd = R'grep -E "^(server|pool)" /etc/ntp.conf'
+        r = self._shellexec(cmd)
+        if r.stdout[0] == "":
+            state += 4
+
+        cmd = R'grep "^restrict.*default" /etc/ntp.conf'
+        r = self._shellexec(cmd)
+        options = ["kod", "nomodify", "notrap", "nopeer", "noquery"]
+        for option in options:
+            for line in r.stdout:
+                if option not in line:
+                    state += 8
+                    self.log.debug(f'Option "{option}" not in line "{line}"')
+                    break
+            else:
+                continue
+            break
+
+        cmd = R"ps aux | grep ntpd | grep -v grep"
+        r = self._shellexec(cmd)
+        if "-u ntp:ntp" not in r.stdout[0]:
+            state += 16
+
+        return state
+
+    def audit_package_not_installed_or_service_is_masked(self, package: str, service: str) -> int:
+        state = 0
+
+        package_installed = bool(not self.audit_package_is_installed(package))
+        self.log.debug(f'package_installed = {package_installed}')
+
+        if package_installed:
+            service_masked = bool(not self.audit_service_is_masked(service))
+            self.log.debug(f'service_masked = {service_masked}')
+
+            if not service_masked:
+                state += 1
+
+        return state
+    
+    def audit_mta_is_localhost_only(self) -> int:
+        state = 0
+
+        cmd = R"ss -lntu | grep -E ':25\s' | grep -E -v '\s(127.0.0.1|\[?::1\]?):25\s'"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "":
+            state += 1
 
         return state
 
@@ -1687,111 +1829,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_iptables_rules_are_saved(self, ip_version: str) -> int:
-        if ip_version == 'ipv4':
-            # cmd = R"diff -qs -y <(iptables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort) <(grep -v '^#' /etc/sysconfig/iptables | sed 's/\[[0-9]*:[0-9]*\]//' | sort)"
-            cmd1 = R"iptables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
-            cmd2 = R"grep -v '^#' /etc/sysconfig/iptables | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
-        elif ip_version == 'ipv6':
-            # cmd = R"diff -qs -y <(ip6tables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort) <(grep -v '^#' /etc/sysconfig/ip6tables | sed 's/\[[0-9]*:[0-9]*\]//' | sort)"
-            cmd1 = R"ip6tables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
-            cmd2 = R"grep -v '^#' /etc/sysconfig/ip6tables | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
-
-        # r = self._shellexec(cmd)
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        self.log.debug(r1)
-        self.log.debug(r2)
-
-        if r1.returncode == 0 and r2.returncode == 0 and r1.stdout == r2.stdout:
-            state = 0
-        else:
-            state = 1
-
-        return state
-
-    def audit_nxdx_support_enabled(self) -> int:
-        state = 0
-        cmd = R'dmesg | grep "protection: active"'
-        r = self._shellexec(cmd)
-
-        if "protection: active" not in r.stdout[0]:
-            state += 1
-
-        return state
-
-    def audit_gdm_login_banner_configured(self) -> int:
-        state = 0
-
-        if self.audit_package_is_installed(package="gdm") == 0:
-            ## Test contents of /etc/dconf/profile/gdm if it exists
-            file = "/etc/dconf/profile/gdm"
-            if os.path.exists(file):
-                with open(file) as f:
-                    contents = f.read()
-                    if "user-db:user" not in contents:
-                        state += 2
-                    if "system-db:gdm" not in contents:
-                        state += 4
-                    if "file-db:/usr/share/gdm/greeter-dconf-defaults" not in contents:
-                        state += 8
-            else:
-                state += 1
-
-            ## Test contents of /etc/dconf/db/gdm.d/01-banner-message, if it exists
-            file = "/etc/dconf/db/gdm.d/01-banner-message"
-            if os.path.exists(file):
-                with open(file) as f:
-                    contents = f.read()
-                    if "[org/gnome/login-screen]\nbanner-message-enable=true\nbanner-message-text=" not in contents:
-                        state += 32
-            else:
-                state += 16
-        else:
-            state = -2
-
-        return state
-
-    def audit_ntp_is_configured(self) -> int:
-        state = 0
-
-        cmd = R"systemctl is-enabled ntpd"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "enabled":
-            state += 1
-
-        cmd = R"systemctl is-active ntpd"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "active":
-            state += 2
-
-        cmd = R'grep -E "^(server|pool)" /etc/ntp.conf'
-        r = self._shellexec(cmd)
-        if r.stdout[0] == "":
-            state += 4
-
-        cmd = R'grep "^restrict.*default" /etc/ntp.conf'
-        r = self._shellexec(cmd)
-        options = ["kod", "nomodify", "notrap", "nopeer", "noquery"]
-        for option in options:
-            for line in r.stdout:
-                if option not in line:
-                    state += 8
-                    self.log.debug(f'Option "{option}" not in line "{line}"')
-                    break
-            else:
-                continue
-            break
-
-        cmd = R"ps aux | grep ntpd | grep -v grep"
-        r = self._shellexec(cmd)
-        if "-u ntp:ntp" not in r.stdout[0]:
-            state += 16
-
-        return state
-
-    ### linux independent end
     def audit_etc_passwd_accounts_use_shadowed_passwords(self) -> int:
         """audit_etc_passwd_accounts_use_shadowed_passwords _summary_
 
@@ -1814,75 +1851,64 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_etc_shadow_password_fields_are_not_empty(self) -> int:
+    
+
+#end here
+    def audit_gpgcheck_is_activated(self) -> int:
         state = 0
 
-        cmd = R"grep -E '^[a-z-]+::' /etc/shadow"
+        cmd = R'grep ^\s*gpgcheck /etc/yum.conf'
+        r = self._shellexec(cmd)
+        if r.stdout[0] != 'gpgcheck=1':
+            state += 1
+
+        cmd = R"grep -P '^\h*gpgcheck=[^1\n\r]+\b(\h+.*)?$' /etc/yum.repos.d/*.repo"
+        # cmd = R"awk -v 'RS=[' -F '\n' '/\n\s*name\s*=\s*.*$/ && ! /\n\s*enabled\s*=\s*0(\W.*)?$/ && ! /\n\s*gpgcheck\s*=\s*1(\W.*)?$/ { t=substr($1, 1, index($1, \"]\")-1); print t, \"does not have gpgcheck enabled.\" }' /etc/yum.repos.d/*.repo"
         r = self._shellexec(cmd)
 
         if r.stdout[0] != '':
-            state += 1
-
-        return state
-
-    def audit_events_for_changes_to_sysadmin_scope_are_collected(self) -> int:
-        state = 0
-        cmd1 = R"grep -h scope /etc/audit/rules.d/*.rules"
-        cmd2 = R"auditctl -l | grep scope"
-
-        expected_output = [
-            '-w /etc/sudoers -p wa -k scope',
-            '-w /etc/sudoers.d -p wa -k scope',
-        ]
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        if r1.stdout != expected_output:
-            state += 1
-
-        if r2.stdout != expected_output:
             state += 2
 
         return state
 
-    def audit_filesystem_integrity_regularly_checked(self) -> int:
-        state = 1
+    def audit_selinux_mode_not_disabled(self) -> int:
+        state = 0
 
-        cmd = R"grep -Ers '^([^#]+\s+)?(\/usr\/s?bin\/|^\s*)aide(\.wrapper)?\s(--?\S+\s)*(--(check|update)|\$AIDEARGS)\b' /etc/cron.* /etc/crontab /var/spool/cron/root /etc/anacrontab"
+        cmd = R"sestatus | awk -F: '/^Current mode:/ {print $2}' | sed 's/\s*//'"
         r = self._shellexec(cmd)
+        if r.stdout[0] not in ["permissive", "enforcing"]:
+            state += 1
 
-        if r.stdout[0] != '':
-            state = 0
-
-        else:
-            cmd1 = 'systemctl is-enabled aidecheck.service'
-            cmd2 = 'systemctl is-enabled aidecheck.timer'
-            cmd3 = 'systemctl is-active aidecheck.timer'
-
-            r1 = self._shellexec(cmd1)
-            r2 = self._shellexec(cmd2)
-            r3 = self._shellexec(cmd3)
-
-            if all(
-                [
-                    r1.stdout[0] == 'enabled',
-                    r2.stdout[0] == 'enabled',
-                    r3.stdout[0] == 'active',
-                ]
-            ):
-                state = 0
+        cmd = R"sestatus | awk -F: '/^Mode from config file:/ {print $2}' | sed 's/\s*//'"
+        r = self._shellexec(cmd)
+        if r.stdout[0] not in ["permissive", "enforcing"]:
+            state += 2
 
         return state
 
-    def audit_firewalld_default_zone_is_set(self) -> int:
-        cmd = 'firewall-cmd --get-default-zone'
+    def audit_selinux_mode_is_enforcing(self) -> int:
+        state = 0
+
+        cmd = R"sestatus | awk -F: '/^Current mode:/ {print $2}' | sed 's/\s*//'"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "enforcing":
+            state += 1
+
+        cmd = R"sestatus | awk -F: '/^Mode from config file:/ {print $2}' | sed 's/\s*//'"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "enforcing":
+            state += 2
+
+        return state
+
+    def audit_no_unconfined_services(self) -> int:
+        state = 0
+
+        cmd = R"ps -eZ | grep unconfined_service_t"
         r = self._shellexec(cmd)
 
-        if r.stdout[0] != '':
-            state = 0
-        else:
-            state = 1
+        if r.stdout[0] != "":
+            state += 1
 
         return state
 
@@ -1919,20 +1945,149 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_gpgcheck_is_activated(self) -> int:
+    def audit_xdmcp_not_enabled(self) -> int:
         state = 0
 
-        cmd = R'grep ^\s*gpgcheck /etc/yum.conf'
+        if os.path.exists('/etc/gdm/'):
+            cmd = R'''awk '{RS="["} /xdmcp/ {print $0}' /etc/gdm/custom.conf | grep -Eis '^\s*Enable\s*=\s*true' '''
+            r = self._shellexec(cmd)
+
+            if r.stdout != ['']:
+                state += 1
+
+        return state
+
+    
+    
+
+    
+
+class Centos7Audit(LinuxIndependentAudit):
+    def __init__(self, config=None):
+        super().__init__(config)
+
+
+    def audit_service_is_enabled(self, service: str) -> int:
+        state = 0
+
+        cmd = f'systemctl is-enabled {service}'
         r = self._shellexec(cmd)
-        if r.stdout[0] != 'gpgcheck=1':
+        if r.stdout[0] != 'enabled':
             state += 1
 
-        cmd = R"grep -P '^\h*gpgcheck=[^1\n\r]+\b(\h+.*)?$' /etc/yum.repos.d/*.repo"
-        # cmd = R"awk -v 'RS=[' -F '\n' '/\n\s*name\s*=\s*.*$/ && ! /\n\s*enabled\s*=\s*0(\W.*)?$/ && ! /\n\s*gpgcheck\s*=\s*1(\W.*)?$/ { t=substr($1, 1, index($1, \"]\")-1); print t, \"does not have gpgcheck enabled.\" }' /etc/yum.repos.d/*.repo"
+        return state
+
+    def audit_iptables_is_flushed(self) -> int:
+        state = 0
+
+        cmd = R"iptables -S | grep -v -- -P"
+        r = self._shellexec(cmd)
+        if r.stdout != ['']:
+            state += 1
+
+        cmd = R"ip6tables -S | grep -v -- -P"
+        r = self._shellexec(cmd)
+        if r.stdout != ['']:
+            state += 2
+
+        return state
+
+    def audit_iptables_rules_are_saved(self, ip_version: str) -> int:
+        if ip_version == 'ipv4':
+            # cmd = R"diff -qs -y <(iptables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort) <(grep -v '^#' /etc/sysconfig/iptables | sed 's/\[[0-9]*:[0-9]*\]//' | sort)"
+            cmd1 = R"iptables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
+            cmd2 = R"grep -v '^#' /etc/sysconfig/iptables | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
+        elif ip_version == 'ipv6':
+            # cmd = R"diff -qs -y <(ip6tables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort) <(grep -v '^#' /etc/sysconfig/ip6tables | sed 's/\[[0-9]*:[0-9]*\]//' | sort)"
+            cmd1 = R"ip6tables-save | grep -v '^#' | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
+            cmd2 = R"grep -v '^#' /etc/sysconfig/ip6tables | sed 's/\[[0-9]*:[0-9]*\]//' | sort"
+
+        # r = self._shellexec(cmd)
+        r1 = self._shellexec(cmd1)
+        r2 = self._shellexec(cmd2)
+
+        self.log.debug(r1)
+        self.log.debug(r2)
+
+        if r1.returncode == 0 and r2.returncode == 0 and r1.stdout == r2.stdout:
+            state = 0
+        else:
+            state = 1
+
+        return state
+
+    def audit_gdm_login_banner_configured(self) -> int:
+        state = 0
+
+        if self.audit_package_is_installed(package="gdm") == 0:
+            ## Test contents of /etc/dconf/profile/gdm if it exists
+            file = "/etc/dconf/profile/gdm"
+            if os.path.exists(file):
+                with open(file) as f:
+                    contents = f.read()
+                    if "user-db:user" not in contents:
+                        state += 2
+                    if "system-db:gdm" not in contents:
+                        state += 4
+                    if "file-db:/usr/share/gdm/greeter-dconf-defaults" not in contents:
+                        state += 8
+            else:
+                state += 1
+
+            ## Test contents of /etc/dconf/db/gdm.d/01-banner-message, if it exists
+            file = "/etc/dconf/db/gdm.d/01-banner-message"
+            if os.path.exists(file):
+                with open(file) as f:
+                    contents = f.read()
+                    if "[org/gnome/login-screen]\nbanner-message-enable=true\nbanner-message-text=" not in contents:
+                        state += 32
+            else:
+                state += 16
+        else:
+            state = -2
+
+        return state
+
+    def audit_etc_shadow_password_fields_are_not_empty(self) -> int:
+        state = 0
+
+        cmd = R"grep -E '^[a-z-]+::' /etc/shadow"
         r = self._shellexec(cmd)
 
         if r.stdout[0] != '':
+            state += 1
+
+        return state
+
+    def audit_events_for_changes_to_sysadmin_scope_are_collected(self) -> int:
+        state = 0
+        cmd1 = R"grep -h scope /etc/audit/rules.d/*.rules"
+        cmd2 = R"auditctl -l | grep scope"
+
+        expected_output = [
+            '-w /etc/sudoers -p wa -k scope',
+            '-w /etc/sudoers.d -p wa -k scope',
+        ]
+
+        r1 = self._shellexec(cmd1)
+        r2 = self._shellexec(cmd2)
+
+        if r1.stdout != expected_output:
+            state += 1
+
+        if r2.stdout != expected_output:
             state += 2
+
+        return state
+
+    def audit_firewalld_default_zone_is_set(self) -> int:
+        cmd = 'firewall-cmd --get-default-zone'
+        r = self._shellexec(cmd)
+
+        if r.stdout[0] != '':
+            state = 0
+        else:
+            state = 1
 
         return state
 
@@ -1999,36 +2154,6 @@ class Centos7Audit(LinuxIndependentAudit):
             state = 0
         else:
             state = 1
-
-        return state
-
-    def audit_kernel_module_is_disabled(self, module: str) -> int:
-        state = 0
-        cmd1 = f'modprobe -n -v {module}'
-        cmd2 = f'lsmod | grep {module}'
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        if r1.stdout[0] == 'install /bin/true ':
-            pass
-        elif r1.stderr[0] == f'modprobe: FATAL: Module {module} not found.':
-            pass
-        else:
-            state = 1
-
-        if module in r2.stdout[0]:
-            state = 2
-
-        return state
-
-    def audit_mta_is_localhost_only(self) -> int:
-        state = 0
-
-        cmd = R"ss -lntu | grep -E ':25\s' | grep -E -v '\s(127.0.0.1|\[?::1\]?):25\s'"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "":
-            state += 1
 
         return state
 
@@ -2151,84 +2276,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_no_unconfined_services(self) -> int:
-        state = 0
-
-        cmd = R"ps -eZ | grep unconfined_service_t"
-        r = self._shellexec(cmd)
-
-        if r.stdout[0] != "":
-            state += 1
-
-        return state
-
-    def audit_only_one_package_is_installed(self, packages: str) -> int:
-        ### Similar to audit_package_is_installed but requires one of many (xor) package is installed
-        cmd = f'rpm -q {packages} | grep -v "not installed"'
-        r = self._shellexec(cmd)
-
-        ## e.g. print(r.stdout) will show:
-        ##  ['chrony-3.4-1.el7.x86_64']
-        ##  ['chrony-3.4-1.el7.x86_64', 'ntp-4.2.6p5-29.el7.centos.2.x86_64']
-
-        if len(r.stdout) == 1 and r.stdout != ['']:
-            state = 0
-        else:
-            state = 1
-
-        return state
-
-    def audit_package_is_installed(self, package: str) -> int:
-        cmd = f'rpm -q {package}'
-        r = self._shellexec(cmd)
-
-        self.log.debug(f"'{cmd}', '{r}'")
-
-        if r.returncode != 0:
-            state = 1
-        else:
-            state = 0
-
-        return state
-
-    def audit_package_not_installed(self, package: str) -> int:
-        cmd = f'rpm -q {package}'
-        r = self._shellexec(cmd)
-
-        self.log.debug(f"'{cmd}', '{r}'")
-
-        if r.returncode == 1:
-            state = 0
-        else:
-            state = 1
-
-        return state
-
-    def audit_package_not_installed_or_service_is_masked(self, package: str, service: str) -> int:
-        state = 0
-
-        package_installed = bool(not self.audit_package_is_installed(package))
-        self.log.debug(f'package_installed = {package_installed}')
-
-        if package_installed:
-            service_masked = bool(not self.audit_service_is_masked(service))
-            self.log.debug(f'service_masked = {service_masked}')
-
-            if not service_masked:
-                state += 1
-
-        return state
-
-    def audit_partition_option_is_set(self, partition: str, option: str) -> int:
-        state = 1
-        cmd = Rf'mount | grep -E "\s{partition}\s" | grep {option}'
-        r = self._shellexec(cmd)
-
-        if partition in r.stdout[0] and option in r.stdout[0]:
-            state = 0
-
-        return state
-
     def audit_permissions_on_log_files(self) -> int:
         cmd = R'find /var/log -type f -perm /g+wx,o+rwx -exec ls -l {} \;'
         r = self._shellexec(cmd)
@@ -2237,20 +2284,6 @@ class Centos7Audit(LinuxIndependentAudit):
             state = 0
         else:
             state = 1
-
-        return state
-
-    def audit_removable_partition_option_is_set(self, option: str) -> int:
-        state = 0
-        removable_mountpoints = self._shellexec("lsblk -o RM,MOUNTPOINT | awk '/1/ {print $2}'").stdout
-
-        for mountpoint in removable_mountpoints:  # pragma: no cover
-            if mountpoint != "":
-                cmd = Rf'findmnt -n "{mountpoint}" | grep -Ev "\b{option}\b"'
-                r = self._shellexec(cmd)
-
-                if r.stdout[0] != "":
-                    state = 1
 
         return state
 
@@ -2279,87 +2312,12 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_selinux_mode_is_enforcing(self) -> int:
-        state = 0
-
-        cmd = R"sestatus | awk -F: '/^Current mode:/ {print $2}' | sed 's/\s*//'"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "enforcing":
-            state += 1
-
-        cmd = R"sestatus | awk -F: '/^Mode from config file:/ {print $2}' | sed 's/\s*//'"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "enforcing":
-            state += 2
-
-        return state
-
-    def audit_selinux_mode_not_disabled(self) -> int:
-        state = 0
-
-        cmd = R"sestatus | awk -F: '/^Current mode:/ {print $2}' | sed 's/\s*//'"
-        r = self._shellexec(cmd)
-        if r.stdout[0] not in ["permissive", "enforcing"]:
-            state += 1
-
-        cmd = R"sestatus | awk -F: '/^Mode from config file:/ {print $2}' | sed 's/\s*//'"
-        r = self._shellexec(cmd)
-        if r.stdout[0] not in ["permissive", "enforcing"]:
-            state += 2
-
-        return state
-
-    def audit_selinux_not_disabled_in_bootloader(self) -> int:
-        state = 0
-        file_paths = []
-        for dirpath, dirnames, filenames in os.walk('/boot/'):
-            if "grub.cfg" in filenames:
-                file_paths.append(dirpath)
-
-        if len(file_paths) == 0:
-            state = -1
-
-        else:
-            for i, path in enumerate(file_paths):
-                cmd = Rf'grep "^\s*linux" {path}/grub.cfg | grep -E "selinux=0|enforcing=0"'
-                r = self._shellexec(cmd)
-
-                if r.stdout != ['']:
-                    state += 2 ** (i + 1)
-
-        return state
-
-    def audit_selinux_policy_is_configured(self) -> int:
-        state = 0
-
-        cmd = R"awk -F= '/^SELINUXTYPE=/ {print $2}' /etc/selinux/config"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "targeted":
-            state += 1
-
-        cmd = R"sestatus | awk -F: '/Loaded policy/ {print $2}' | sed 's/\s*//'"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "targeted":
-            state += 2
-
-        return state
-
     def audit_service_is_active(self, service: str) -> int:
         state = 0
 
         cmd = f'systemctl is-active {service}'
         r = self._shellexec(cmd)
         if r.stdout[0] != 'active':
-            state += 1
-
-        return state
-
-    def audit_service_is_disabled(self, service: str) -> int:
-        state = 0
-
-        cmd = f'systemctl is-enabled {service}'
-        r = self._shellexec(cmd)
-        if r.stdout[0] != 'disabled':
             state += 1
 
         return state
@@ -2374,17 +2332,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         if r.stdout[0] != 'masked':
             state += 1
-
-        return state
-
-    def audit_sticky_bit_on_world_writable_dirs(self) -> int:
-        cmd = R"df --local -P 2> /dev/null | awk '{if (NR!=1) print $6}' | xargs -I '{}' find '{}' -xdev -type d \( -perm -0002 -a ! -perm -1000 \)"
-        r = self._shellexec(cmd)
-
-        if r.returncode == 0 and r.stdout[0] == '':
-            state = 0
-        elif r.returncode == 0 and r.stdout[0] != '':
-            state = 1
 
         return state
 
@@ -2409,35 +2356,9 @@ class Centos7Audit(LinuxIndependentAudit):
         return state
 
 
-    def audit_updates_installed(self) -> int:
-        cmd = R'yum -q check-update'
-        r = self._shellexec(cmd)
+    
 
-        ## From man 8 yum
-        ## Returns exit value of 100 if there are packages available for an update. Also returns a list of the packages to be updated in list format.
-        ## Returns 0 if no packages are available for update.
-        ## Returns 1 if an error occurred.
-
-        if r.returncode == 0:
-            state = 0
-        elif r.returncode == 1:
-            state = -1
-        elif r.returncode == 100:
-            state = 1
-
-        return state
-
-    def audit_xdmcp_not_enabled(self) -> int:
-        state = 0
-
-        if os.path.exists('/etc/gdm/'):
-            cmd = R'''awk '{RS="["} /xdmcp/ {print $0}' /etc/gdm/custom.conf | grep -Eis '^\s*Enable\s*=\s*true' '''
-            r = self._shellexec(cmd)
-
-            if r.stdout != ['']:
-                state += 1
-
-        return state
+    
 
     
 
