@@ -1859,7 +1859,9 @@ class LinuxIndependentAudit(CISAudit):
 
         return state
 
-    '''doesn't exist in benchmark
+    #need to check these functions
+    
+    #doesn't exist in benchmark
     def audit_selinux_mode_not_disabled(self) -> int:
         state = 0
 
@@ -1874,9 +1876,9 @@ class LinuxIndependentAudit(CISAudit):
             state += 2
 
         return state
-    '''
     
-    '''different description
+    
+    #different description
     def audit_selinux_mode_is_enforcing(self) -> int:
         state = 0
 
@@ -1891,9 +1893,9 @@ class LinuxIndependentAudit(CISAudit):
             state += 2
 
         return state
-    '''
     
-    '''different description
+    
+    #different description
     def audit_no_unconfined_services(self) -> int:
         state = 0
 
@@ -1904,13 +1906,73 @@ class LinuxIndependentAudit(CISAudit):
             state += 1
 
         return state
-    '''
+    
 
 class Centos7Audit(LinuxIndependentAudit):
     def __init__(self, config=None):
         super().__init__(config)
 
+    def audit_gpgcheck_is_activated(self) -> int:
+        state = 0
 
+        cmd = R'grep ^\s*gpgcheck /etc/yum.conf'
+        r = self._shellexec(cmd)
+        if r.stdout[0] != 'gpgcheck=1':
+            state += 1
+
+        cmd = R"grep -P '^\h*gpgcheck=[^1\n\r]+\b(\h+.*)?$' /etc/yum.repos.d/*.repo"
+        # cmd = R"awk -v 'RS=[' -F '\n' '/\n\s*name\s*=\s*.*$/ && ! /\n\s*enabled\s*=\s*0(\W.*)?$/ && ! /\n\s*gpgcheck\s*=\s*1(\W.*)?$/ { t=substr($1, 1, index($1, \"]\")-1); print t, \"does not have gpgcheck enabled.\" }' /etc/yum.repos.d/*.repo"
+        r = self._shellexec(cmd)
+
+        if r.stdout[0] != '':
+            state += 2
+
+        return state
+
+    def audit_gdm_last_user_logged_in_disabled(self) -> int:
+        state = 0
+
+        if self.audit_package_is_installed(package="gdm") == 0:
+            ## Test contents of /etc/dconf/profile/gdm if it exists
+            file = "/etc/dconf/profile/gdm"
+            if os.path.exists(file):
+                with open(file) as f:
+                    contents = f.read()
+                    if "user-db:user" not in contents:
+                        state += 2
+                    if "system-db:gdm" not in contents:
+                        state += 4
+                    if "file-db:/usr/share/gdm/greeter-dconf-defaults" not in contents:
+                        state += 8
+            else:
+                state += 1
+
+            ## Test contents of /etc/dconf/db/gdm.d/01-banner-message, if it exists
+            file = "/etc/dconf/db/gdm.d/00-login-screen"
+            if os.path.exists(file):
+                with open(file) as f:
+                    contents = f.read()
+                    if "[org/gnome/login-screen]\ndisable-user-list=true" not in contents:
+                        state += 32
+            else:
+                state += 16
+
+        else:
+            state = -2
+
+        return state
+
+    def audit_xdmcp_not_enabled(self) -> int:
+        state = 0
+
+        if os.path.exists('/etc/gdm/'):
+            cmd = R'''awk '{RS="["} /xdmcp/ {print $0}' /etc/gdm/custom.conf | grep -Eis '^\s*Enable\s*=\s*true' '''
+            r = self._shellexec(cmd)
+
+            if r.stdout != ['']:
+                state += 1
+
+        return state
     def audit_service_is_enabled(self, service: str) -> int:
         state = 0
 
