@@ -458,7 +458,6 @@ benchmarks = {
             # {'_id': "3.4.3", 'description': "Ensure RDS is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'rds'}, 'levels': {'server': 2, 'workstation': 2}},
             # {'_id': "3.4.4", 'description': "Ensure TIPC is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'tipc'}, 'levels': {'server': 2, 'workstation': 2}},
             
-            #here end
             {'_id': "3.5", 'description': "Firewall Configuration", 'type': "header"},
             {'_id': "3.5.1", 'description': "Configure IPv6 ip6tables", 'type': "header"},
             {'_id': "3.5.1.1", 'description': "Ensure ip6tables default deny firewall policy", 'function': Centos7Audit.audit_iptables_default_deny_policy, 'kwargs': {'ip_version': 'ipv6'}, 'levels': {'server': 1, 'workstation': 1}},
