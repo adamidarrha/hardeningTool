@@ -452,46 +452,6 @@ class LinuxIndependentAudit(CISAudit):
 
         return state
     
-    def audit_duplicate_gids(self) -> int:
-        state = 0
-        cmd = R'cut -d: -f3 /etc/group | sort | uniq -d'
-
-        r = self._shellexec(cmd)
-        if r.stdout[0] != '':
-            state = 1
-
-        return state
-
-    def audit_duplicate_group_names(self) -> int:
-        state = 0
-        cmd = R'cut -d: -f1 /etc/group | sort | uniq -d'
-
-        r = self._shellexec(cmd)
-        if r.stdout[0] != '':
-            state = 1
-
-        return state
-
-    def audit_duplicate_uids(self) -> int:
-        state = 0
-        cmd = R'cut -d: -f3 /etc/passwd | sort | uniq -d'
-
-        r = self._shellexec(cmd)
-        if r.stdout[0] != '':
-            state = 1
-
-        return state
-
-    def audit_duplicate_user_names(self) -> int:
-        state = 0
-        cmd = R'cut -d: -f1 /etc/passwd | sort | uniq -d'
-
-        r = self._shellexec(cmd)
-        if r.stdout[0] != '':
-            state = 1
-
-        return state
-    
     def audit_core_dumps_restricted(self) -> int:
         state = 0
 
@@ -533,17 +493,6 @@ class LinuxIndependentAudit(CISAudit):
 
         return state
     
-    def audit_cron_is_restricted_to_authorized_users(self) -> int:
-        state = 0
-
-        if os.path.exists('/etc/at.deny'):
-            state += 1
-
-        if self.audit_file_permissions(file="/etc/at.allow", expected_user="root", expected_group="root", expected_mode="0600") != 0:
-            state += 2
-
-        return state
-
     def audit_homedirs_exist(self) -> int:
         state = 0
 
@@ -616,18 +565,6 @@ class LinuxIndependentAudit(CISAudit):
             if self.audit_file_permissions(homedir, '0750') != 0:
                 state = 1
                 self.log.warning(f'Homedir {homedir} is not 0750 or more restrictive')
-
-        return state
-
-    def audit_etc_passwd_gids_exist_in_etc_group(self) -> int:
-        gids_from_etc_group = self._shellexec("awk -F: '{print $3}' /etc/group | sort -un").stdout
-        gids_from_etc_passwd = self._shellexec("awk -F: '{print $4}' /etc/passwd | sort -un").stdout
-        state = 0
-
-        for gid in gids_from_etc_passwd:
-            if gid not in gids_from_etc_group:
-                self.log.warning(f'GID {gid} exists in /etc/passwd but not in /etc/group')
-                state = 1
 
         return state
 
@@ -1853,26 +1790,78 @@ class LinuxIndependentAudit(CISAudit):
 
         return state
 
-    
-
-#end here
-    def audit_gpgcheck_is_activated(self) -> int:
-        state = 0
-
-        cmd = R'grep ^\s*gpgcheck /etc/yum.conf'
-        r = self._shellexec(cmd)
-        if r.stdout[0] != 'gpgcheck=1':
-            state += 1
-
-        cmd = R"grep -P '^\h*gpgcheck=[^1\n\r]+\b(\h+.*)?$' /etc/yum.repos.d/*.repo"
-        # cmd = R"awk -v 'RS=[' -F '\n' '/\n\s*name\s*=\s*.*$/ && ! /\n\s*enabled\s*=\s*0(\W.*)?$/ && ! /\n\s*gpgcheck\s*=\s*1(\W.*)?$/ { t=substr($1, 1, index($1, \"]\")-1); print t, \"does not have gpgcheck enabled.\" }' /etc/yum.repos.d/*.repo"
+    def audit_rsyslog_default_file_permission_is_configured(self) -> int:
+        cmd = R'grep -h ^\$FileCreateMode /etc/rsyslog.conf /etc/rsyslog.d/*.conf'
         r = self._shellexec(cmd)
 
-        if r.stdout[0] != '':
-            state += 2
+        if r.stdout[0] == '$FileCreateMode 0640':
+            state = 0
+        else:
+            state = 1
 
         return state
 
+    def audit_rsyslog_sends_logs_to_a_remote_log_host(self) -> int:
+        cmd1 = R'grep -Eh "^\s*([^#]+\s+)?action\(([^#]+\s+)?\btarget=\"?[^#\"]+\"?\b" /etc/rsyslog.conf /etc/rsyslog.d/*.conf'  # https://regex101.com/r/Ud69Ey/4
+        cmd2 = R"grep -Eh '^\s*[^#\s]*\.\*\s+@' /etc/rsyslog.conf /etc/rsyslog.d/*.conf"  # https://regex101.com/r/DMX1lZ/1
+
+        r1 = self._shellexec(cmd1)
+        r2 = self._shellexec(cmd2)
+
+        if r1.stdout[0] != '' or r2.stdout[0] != '':
+            state = 0
+        else:
+            state = 1
+
+        return state
+
+    def audit_journald_configured_to_send_logs_to_rsyslog(self) -> int:
+        cmd = R'grep -E ^\s*ForwardToSyslog= /etc/systemd/journald.conf'
+        r = self._shellexec(cmd)
+
+        if r.stdout[0] == 'ForwardToSyslog=yes':
+            state = 0
+        else:
+            state = 1
+
+        return state
+
+    def audit_journald_configured_to_compress_large_logs(self) -> int:
+        cmd = R'grep -E ^\s*Compress= /etc/systemd/journald.conf'
+        r = self._shellexec(cmd)
+
+        if r.stdout[0] == 'Compress=yes':
+            state = 0
+        else:
+            state = 1
+
+        return state
+
+    def audit_journald_configured_to_write_logfiles_to_disk(self) -> int:
+        cmd = R'grep -E ^\s*Storage= /etc/systemd/journald.conf'
+        r = self._shellexec(cmd)
+
+        if r.stdout[0] == 'Storage=persistent':
+            state = 0
+        else:
+            state = 1
+
+        return state
+
+    def audit_permissions_on_log_files(self) -> int:
+        cmd = R'find /var/log -type f -perm /g+wx,o+rwx -exec ls -l {} \;'
+        r = self._shellexec(cmd)
+
+        if r.stdout[0] == '':
+            state = 0
+        else:
+            state = 1
+
+        return state
+
+    #need to check these functions
+    
+    #doesn't exist in benchmark
     def audit_selinux_mode_not_disabled(self) -> int:
         state = 0
 
@@ -1887,7 +1876,9 @@ class LinuxIndependentAudit(CISAudit):
             state += 2
 
         return state
-
+    
+    
+    #different description
     def audit_selinux_mode_is_enforcing(self) -> int:
         state = 0
 
@@ -1902,7 +1893,9 @@ class LinuxIndependentAudit(CISAudit):
             state += 2
 
         return state
-
+    
+    
+    #different description
     def audit_no_unconfined_services(self) -> int:
         state = 0
 
@@ -1911,6 +1904,28 @@ class LinuxIndependentAudit(CISAudit):
 
         if r.stdout[0] != "":
             state += 1
+
+        return state
+    
+
+class Centos7Audit(LinuxIndependentAudit):
+    def __init__(self, config=None):
+        super().__init__(config)
+
+    def audit_gpgcheck_is_activated(self) -> int:
+        state = 0
+
+        cmd = R'grep ^\s*gpgcheck /etc/yum.conf'
+        r = self._shellexec(cmd)
+        if r.stdout[0] != 'gpgcheck=1':
+            state += 1
+
+        cmd = R"grep -P '^\h*gpgcheck=[^1\n\r]+\b(\h+.*)?$' /etc/yum.repos.d/*.repo"
+        # cmd = R"awk -v 'RS=[' -F '\n' '/\n\s*name\s*=\s*.*$/ && ! /\n\s*enabled\s*=\s*0(\W.*)?$/ && ! /\n\s*gpgcheck\s*=\s*1(\W.*)?$/ { t=substr($1, 1, index($1, \"]\")-1); print t, \"does not have gpgcheck enabled.\" }' /etc/yum.repos.d/*.repo"
+        r = self._shellexec(cmd)
+
+        if r.stdout[0] != '':
+            state += 2
 
         return state
 
@@ -1958,17 +1973,6 @@ class LinuxIndependentAudit(CISAudit):
                 state += 1
 
         return state
-
-    
-    
-
-    
-
-class Centos7Audit(LinuxIndependentAudit):
-    def __init__(self, config=None):
-        super().__init__(config)
-
-
     def audit_service_is_enabled(self, service: str) -> int:
         state = 0
 
@@ -2093,72 +2097,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         return state
 
-    def audit_homedirs_exist(self) -> int:
-        state = 0
-
-        for user, uid, homedir in self._get_homedirs():
-            if homedir != '':
-                if not os.path.isdir(homedir):
-                    self.log.warning(f'The homedir {homedir} does not exist')
-                    state = 1
-
-        return state
-
-    def audit_homedirs_ownership(self) -> int:
-        state = 0
-
-        for user, uid, homedir in self._get_homedirs():
-            dir = os.stat(homedir)
-
-            if dir.st_uid != int(uid):
-                state = 1
-                self.log.warning(f'{user}({uid}) does not own {homedir}')
-
-        return state
-
-    def audit_homedirs_permissions(self) -> int:
-        state = 0
-
-        for user, uid, homedir in self._get_homedirs():
-            if self.audit_file_permissions(homedir, '0750') != 0:
-                state = 1
-                self.log.warning(f'Homedir {homedir} is not 0750 or more restrictive')
-
-        return state
-
-    def audit_journald_configured_to_compress_large_logs(self) -> int:
-        cmd = R'grep -E ^\s*Compress= /etc/systemd/journald.conf'
-        r = self._shellexec(cmd)
-
-        if r.stdout[0] == 'Compress=yes':
-            state = 0
-        else:
-            state = 1
-
-        return state
-
-    def audit_journald_configured_to_send_logs_to_rsyslog(self) -> int:
-        cmd = R'grep -E ^\s*ForwardToSyslog= /etc/systemd/journald.conf'
-        r = self._shellexec(cmd)
-
-        if r.stdout[0] == 'ForwardToSyslog=yes':
-            state = 0
-        else:
-            state = 1
-
-        return state
-
-    def audit_journald_configured_to_write_logfiles_to_disk(self) -> int:
-        cmd = R'grep -E ^\s*Storage= /etc/systemd/journald.conf'
-        r = self._shellexec(cmd)
-
-        if r.stdout[0] == 'Storage=persistent':
-            state = 0
-        else:
-            state = 1
-
-        return state
-
     def audit_nftables_base_chains_exist(self) -> int:
         state = 0
 
@@ -2275,42 +2213,6 @@ class Centos7Audit(LinuxIndependentAudit):
         r = self._shellexec(cmd)
         if r.stdout == ['']:
             state += 1
-
-        return state
-
-    def audit_permissions_on_log_files(self) -> int:
-        cmd = R'find /var/log -type f -perm /g+wx,o+rwx -exec ls -l {} \;'
-        r = self._shellexec(cmd)
-
-        if r.stdout[0] == '':
-            state = 0
-        else:
-            state = 1
-
-        return state
-
-    def audit_rsyslog_default_file_permission_is_configured(self) -> int:
-        cmd = R'grep -h ^\$FileCreateMode /etc/rsyslog.conf /etc/rsyslog.d/*.conf'
-        r = self._shellexec(cmd)
-
-        if r.stdout[0] == '$FileCreateMode 0640':
-            state = 0
-        else:
-            state = 1
-
-        return state
-
-    def audit_rsyslog_sends_logs_to_a_remote_log_host(self) -> int:
-        cmd1 = R'grep -Eh "^\s*([^#]+\s+)?action\(([^#]+\s+)?\btarget=\"?[^#\"]+\"?\b" /etc/rsyslog.conf /etc/rsyslog.d/*.conf'  # https://regex101.com/r/Ud69Ey/4
-        cmd2 = R"grep -Eh '^\s*[^#\s]*\.\*\s+@' /etc/rsyslog.conf /etc/rsyslog.d/*.conf"  # https://regex101.com/r/DMX1lZ/1
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        if r1.stdout[0] != '' or r2.stdout[0] != '':
-            state = 0
-        else:
-            state = 1
 
         return state
 
