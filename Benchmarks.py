@@ -58,7 +58,7 @@ benchmarks = {
             {'_id': "1.6.1.2", 'description': "Ensure SELinux is not disabled in bootloader configuration", 'function': Centos7Audit.audit_selinux_not_disabled_in_bootloader, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.6.1.3", 'description': "Ensure SELinux policy is configured", 'function': Centos7Audit.audit_selinux_policy_is_configured, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.6.1.4", 'description': "Ensure the SELinux mode is enforcing or permissive", 'function': Centos7Audit.audit_selinux_mode_not_disabled, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "1.6.1.5", 'description': "Ensure the SELinux mode is enforcing", 'function': Centos7Audit.audit_selinux_mode_is_enforcing, 'levels': {'server': 2, 'workstation': 2}},
+            {'_id': "1.6.1.5", 'description': "Ensure the SELinux mode is enforcing", 'function': Centos7Audit.audit_selinux_state_is_enforcing, 'levels': {'server': 2, 'workstation': 2}},
             {'_id': "1.6.1.6", 'description': "Ensure no unconfined services exist", 'function': Centos7Audit.audit_no_unconfined_services, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.6.1.7", 'description': "Ensure SETroubleshoot is not installed", 'function': Centos7Audit.audit_package_not_installed, 'kwargs': {'package': 'setroubleshoot'}, 'levels': {'server': 1, 'workstation': None}},
             {'_id': "1.6.1.8", 'description': 'Ensure the MCS Translation Service (mcstrans) is not installed', 'function': Centos7Audit.audit_package_not_installed, 'kwargs': {'package': 'mcstrans'}, 'levels': {'server': 1, 'workstation': 1}},
@@ -115,7 +115,7 @@ benchmarks = {
             {'_id': "3.2", 'description': 'Network Parameters (Host Only)', 'type': "header"},
             {'_id': "3.2.1", 'description': "Ensure IP forwarding is disabled", 'function': Centos7Audit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.ip_forward", "net.ipv6.conf.all.forwarding", "net.ipv6.conf.default.forwarding"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "3.2.2", 'description': "Ensure packet redirect sending is disabled", 'function': Centos7Audit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.send_redirects", "net.ipv4.conf.default.send_redirects"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
-            {'_id': "3.3", 'description': "Network Parameters (Host and Router", 'type': "header"},
+            {'_id': "3.3", 'description': "Network Parameters (Host and Router)", 'type': "header"},
             {'_id': "3.3.1", 'description': "Ensure source routed packets are not accepted", 'function': Centos7Audit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.accept_source_route", "net.ipv4.conf.default.accept_source_route", "net.ipv6.conf.all.accept_source_route", "net.ipv6.conf.default.accept_source_route"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "3.3.2", 'description': "Ensure ICMP redirects are not accepted", 'function': Centos7Audit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.accept_redirects", "net.ipv4.conf.default.accept_redirects", "net.ipv6.conf.all.accept_redirects", "net.ipv6.conf.default.accept_redirects"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "3.3.3", 'description': "Ensure secure ICMP redirects are not accepted", 'function': Centos7Audit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.secure_redirects", "net.ipv4.conf.default.secure_redirects"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
@@ -310,14 +310,26 @@ benchmarks = {
             {'_id': "1", 'description': "Initial Setup", 'type': "header"},
             {'_id': "1.1", 'description': "Filesystem Configuration", 'type': "header"},
             {'_id': "1.1.1", 'description': "Disable unused filesystems", 'type': "header"},
-            #1.1.1.1
+            {'_id': "1.1.1.1", 'description': "Ensure mounting of cramfs is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'cramfs'}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #1.1.1.2
+            {'_id': "1.1.1.2", 'description': "Ensure mounting of freevxfs filesystems is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'freevxfs'}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #1.1.1.3
+            {'_id': "1.1.1.3", 'description': "Ensure mounting of jffs2 filesystems is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'jffs2'}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #1.1.1.4
+            {'_id': "1.1.1.4", 'description': "Ensure mounting of hfs filesystems is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'hfs'}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #1.1.1.5
-            #1.1.1.6
-            #1.1.1.7
+            {'_id': "1.1.1.5", 'description': "Ensure mounting of hfsplus filesystems is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'hfsplus'}, 'levels': {'server': 1, 'workstation': 1}},
+            
+            {'_id': "1.1.1.6", 'description': "Ensure mounting of squashfs is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'squashfs'}, 'levels': {'server': 2, 'workstation': 2}},
+            {'_id': "1.1.1.7", 'description': "Ensure mounting of udf is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'udf'}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #1.1.1.8
+            {'_id': "1.1.1.8", 'description': "Ensure mounting of FAT filesystems is limited", 'function': None, 'kwargs': {'module': 'vfat'}, 'levels': {'server': 1, 'workstation': 1}},
+
             {'_id': "1.1.2", 'description': 'Ensure /tmp is configured', 'function': LinuxIndependentAudit.audit_partition_is_separate, 'kwargs': {'partition': '/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.1.3", 'description': 'Ensure nodev option set on /tmp partition', 'function': LinuxIndependentAudit.audit_partition_option_is_set, 'kwargs': {'option': 'nodev', 'partition': '/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.1.4", 'description': 'Ensure nosuid option set on /tmp partition', 'function': LinuxIndependentAudit.audit_partition_option_is_set, 'kwargs': {'option': 'nosuid', 'partition': '/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
@@ -341,7 +353,7 @@ benchmarks = {
             {'_id': "1.1.22", 'description': "Disable Automounting", 'function': LinuxIndependentAudit.audit_service_is_disabled, 'kwargs': {'service': 'autofs'}, 'levels': {'server': 1, 'workstation': 2}},
             {'_id': "1.1.23", 'description': "Disable USB Storage", 'function': LinuxIndependentAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'usb-storage'}, 'levels': {'server': 1, 'workstation': 2}},
             {'_id': "1.2", 'description': "Configure Software Updates", 'type': "header"},
-            #1.2.1
+            {'_id': "1.2.1", 'description': "Ensure package manager repositories are configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.2.2", 'description': "Ensure GPG keys are configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.3", 'description': "Filesystem Integrity Checking", 'type': "header"},
             {'_id': "1.3.1", 'description': "Ensure AIDE is installed", 'function': LinuxIndependentAudit.audit_package_is_installed, 'kwargs': {'package': 'aide'}, 'levels': {'server': 1, 'workstation': 1}},
@@ -351,7 +363,10 @@ benchmarks = {
             {'_id': "1.4.1.2", 'description': "Ensure permissions on bootloader config are configured", 'function': LinuxIndependentAudit.audit_file_permissions, 'kwargs': {'file': '/boot/grub2/grub.cfg', 'expected_user': 'root', 'expected_group': 'root', 'expected_mode': '0600'}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.4.2", 'description': "Ensure bootloader password is set", 'function': LinuxIndependentAudit.audit_bootloader_password_is_set, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.4.3", 'description': "Ensure authentication required for single user mode", 'function': LinuxIndependentAudit.audit_auth_for_single_user_mode, 'levels': {'server': 1, 'workstation': 1}},
+            
             #1.4.4
+            {'_id': "1.4.4", 'description': "Ensure interactive boot is not enabled", 'function': LinuxIndependentAudit.audit_interactive_boot_not_enabled, 'levels': {'server': 1, 'workstation': 1}},
+            
             {'_id': "1.5", 'description': "Additional Process Hardening", 'type': "header"},
             {'_id': "1.5.1", 'description': "Ensure core dumps are restricted", 'function': LinuxIndependentAudit.audit_core_dumps_restricted, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.5.2", 'description': 'Ensure XD/NX support is enabled', 'function': LinuxIndependentAudit.audit_nxdx_support_enabled, 'levels': {'server': 1, 'workstation': 1}},
@@ -362,15 +377,20 @@ benchmarks = {
             {'_id': "1.6.1.1", 'description': "Ensure SELinux is installed", 'function': LinuxIndependentAudit.audit_package_is_installed, 'kwargs': {'package': 'libselinux'}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.6.2", 'description': "Configure SELinux", 'type': "header"},
             {'_id': "1.6.2.1", 'description': "Ensure SELinux is not disabled in bootloader configuration", 'function': LinuxIndependentAudit.audit_selinux_not_disabled_in_bootloader, 'levels': {'server': 1, 'workstation': 1}},
-            #different description{'_id': "1.6.2.2", 'description': "Ensure the SELinux mode is enforcing", 'function': LinuxIndependentAudit.audit_selinux_mode_is_enforcing, 'levels': {'server': 2, 'workstation': 2}},
+            {'_id': "1.6.2.2", 'description': "Ensure the SELinux state is enforcing", 'function': LinuxIndependentAudit.audit_selinux_state_is_enforcing, 'levels': {'server': 2, 'workstation': 2}},
             #doesn't exist{'_id': "1.6.2.4", 'description': "Ensure the SELinux mode is enforcing or permissive", 'function': LinuxIndependentAudit.audit_selinux_mode_not_disabled, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.6.2.3", 'description': "Ensure SELinux policy is configured", 'function': LinuxIndependentAudit.audit_selinux_policy_is_configured, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.6.2.4", 'description': "Ensure SETroubleshoot is not installed", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'setroubleshoot'}, 'levels': {'server': 1, 'workstation': None}},
             {'_id': "1.6.2.5", 'description': 'Ensure the MCS Translation Service (mcstrans) is not installed', 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'mcstrans'}, 'levels': {'server': 1, 'workstation': 1}},
             #different description{'_id': "1.6.2.6", 'description': "Ensure no unconfined services exist", 'function': LinuxIndependentAudit.audit_no_unconfined_services, 'levels': {'server': 1, 'workstation': 1}},
-            #1.6.3
+            {'_id': "1.6.3", 'description': "Configure AppArmor", 'type': "header"},
+            
             #1.6.3.1
+            {'_id': "1.6.3.1", 'description': 'Ensure AppArmor is not disabled in bootloader configuration', 'function': None, 'kwargs': {'package': 'mcstrans'}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #1.6.3.2
+            {'_id': "1.6.3.2", 'description': 'Ensure all AppArmor Profiles are enforcing', 'function': None, 'kwargs': {'package': 'mcstrans'}, 'levels': {'server': 1, 'workstation': 1}},
+            
             {'_id': "1.7", 'description': "Command Line Warning Banners", 'type': "header"},
             {'_id': "1.7.1.1", 'description': "Ensure message of the day is configured properly", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.7.1.2", 'description': "Ensure local login warning banner is configured properly", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
@@ -384,25 +404,48 @@ benchmarks = {
             
             {'_id': "2", 'description': "Services", 'type': "header"},
             {'_id': "2.1", 'description': "inetd Services", 'type': "header"},
+            
             #2.1.1
+            {'_id': "2.1.1", 'description': "Ensure chargen services are not enabled", 'function': None, 'kwargs': {'packages': "chrony ntp"}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #2.1.2
+            {'_id': "2.1.2", 'description': "Ensure daytime services are not enabled", 'function': None, 'kwargs': {'packages': "chrony ntp"}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #2.1.3
+            {'_id': "2.1.3", 'description': "Ensure discard services are not enabled", 'function': None, 'kwargs': {'packages': "chrony ntp"}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #2.1.4
+            {'_id': "2.1.4", 'description': "Ensure echo services are not enabled", 'function': None, 'kwargs': {'packages': "chrony ntp"}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #2.1.5
+            {'_id': "2.1.5", 'description': "Ensure time services are not enabled", 'function': None, 'kwargs': {'packages': "chrony ntp"}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #2.1.6
+            {'_id': "2.1.6", 'description': "Ensure rsh server is not enabled", 'function': None, 'kwargs': {'packages': "chrony ntp"}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #2.1.7
-            #2.1.8
+            {'_id': "2.1.7", 'description': "Ensure talk server is not enabled", 'function': None, 'kwargs': {'packages': "chrony ntp"}, 'levels': {'server': 1, 'workstation': 1}},
+            
+            #2.1.8{'_id': "2.1.8", 'description': 'Ensure telnet server is not installed', 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'telnet-server'}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #2.1.9
-            {'_id': "2.1.10", 'description': "Ensure xinetd is not installed", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'xinetd'}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "2.1.9", 'description': "Ensure tftp server is not enabled", 'function': None, 'kwargs': {'packages': "chrony ntp"}, 'levels': {'server': 1, 'workstation': 1}},
+            
+            #ensure not enabled{'_id': "2.1.10", 'description': "Ensure xinetd is not installed", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'xinetd'}, 'levels': {'server': 1, 'workstation': 1}},
             
             {'_id': "2.2", 'description': "Special Purpose Services", 'type': "header"},
             {'_id': "2.2.1", 'description': "Time Synchronization", 'type': "header"},
             {'_id': "2.2.1.1", 'description': "Ensure time synchronisation is in use", 'function': LinuxIndependentAudit.audit_only_one_package_is_installed, 'kwargs': {'packages': "chrony ntp"}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "2.2.1.2", 'description': "Ensure ntp is configured", 'function': LinuxIndependentAudit.audit_ntp_is_configured, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "2.2.1.3", 'description': "Ensure chrony is configured", 'function': LinuxIndependentAudit.audit_chrony_is_configured, 'levels': {'server': 1, 'workstation': 1}},
+            
             #2.2.1.4
+            {'_id': "2.2.1.4", 'description': "Ensure systemd-timesyncd is configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+
             
             #2.2.2
+            {'_id': "2.2.2", 'description': "Ensure X Window Server is not installed", 'function': None, 'kwargs': {'package': 'avahi*'}, 'levels': {'server': 1, 'workstation': 2}},
+
             {'_id': "2.2.3", 'description': "Ensure Avahi Server is not installed", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'avahi*'}, 'levels': {'server': 1, 'workstation': 2}},
             {'_id': "2.2.4", 'description': "Ensure CUPS is not installed", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'cups'}, 'levels': {'server': 1, 'workstation': None}},
             {'_id': "2.2.5", 'description': "Ensure DHCP Server is not installed", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'dhcp'}, 'levels': {'server': 1, 'workstation': 1}},
@@ -419,8 +462,7 @@ benchmarks = {
             {'_id': "2.2.15", 'description': 'Ensure mail transfer agent is configured for local-only mode', 'function': LinuxIndependentAudit.audit_mta_is_localhost_only, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "2.2.16", 'description': "Ensure rsync is not installed or the rsyncd service is masked", 'function': LinuxIndependentAudit.audit_package_not_installed_or_service_is_masked, 'kwargs': {'package': "rsync", 'service': "rsyncd"}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "2.2.17", 'description': "Ensure NIS server is not installed", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'ypserv'}, 'levels': {'server': 1, 'workstation': 1}},
-            #doesn't exist in benchmark{'_id': "2.2.15", 'description': 'Ensure telnet-server is not installed', 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'telnet-server'}, 'levels': {'server': 1, 'workstation': 1}},
-            
+
             {'_id': "2.3", 'description': "Service Clients", 'type': "header"},
             {'_id': "2.3.1", 'description': "Ensure NIS client is not installed", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'ypcbind'}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "2.3.2", 'description': "Ensure rsh client is not installed", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'rsh'}, 'levels': {'server': 1, 'workstation': 1}},
@@ -435,7 +477,7 @@ benchmarks = {
             {'_id': "3.1.1", 'description': "Ensure IP forwarding is disabled", 'function': LinuxIndependentAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.ip_forward", "net.ipv6.conf.all.forwarding", "net.ipv6.conf.default.forwarding"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "3.1.2", 'description': "Ensure packet redirect sending is disabled", 'function': LinuxIndependentAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.send_redirects", "net.ipv4.conf.default.send_redirects"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
             
-            {'_id': "3.2", 'description': "Network Parameters (Host and Router", 'type': "header"},
+            {'_id': "3.2", 'description': "Network Parameters (Host and Router)", 'type': "header"},
             {'_id': "3.2.1", 'description': "Ensure source routed packets are not accepted", 'function': LinuxIndependentAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.accept_source_route", "net.ipv4.conf.default.accept_source_route", "net.ipv6.conf.all.accept_source_route", "net.ipv6.conf.default.accept_source_route"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "3.2.2", 'description': "Ensure ICMP redirects are not accepted", 'function': LinuxIndependentAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.accept_redirects", "net.ipv4.conf.default.accept_redirects", "net.ipv6.conf.all.accept_redirects", "net.ipv6.conf.default.accept_redirects"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "3.2.3", 'description': "Ensure secure ICMP redirects are not accepted", 'function': LinuxIndependentAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.conf.all.secure_redirects", "net.ipv4.conf.default.secure_redirects"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
@@ -446,19 +488,29 @@ benchmarks = {
             {'_id': "3.2.8", 'description': "Ensure TCP SYN Cookies is enabled", 'function': LinuxIndependentAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv4.tcp_syncookies"], 'value': 1}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "3.2.9", 'description': "Ensure IPv6 router advertisments are not accepted", 'function': LinuxIndependentAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv6.conf.all.accept_ra", "net.ipv6.conf.default.accept_ra"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
             
-            #3.3
+            {'_id': "3.3", 'description': "TCP Wrappers", 'type': "header"},
+            
             #3.3.1
+            {'_id': "3.2.1", 'description': "Ensure TCP Wrappers is installed", 'function': None, 'kwargs': {'flags': ["net.ipv6.conf.all.accept_ra", "net.ipv6.conf.default.accept_ra"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #3.3.2
+            {'_id': "3.2.2", 'description': "Ensure /etc/hosts.allow is configured", 'function': None, 'kwargs': {'flags': ["net.ipv6.conf.all.accept_ra", "net.ipv6.conf.default.accept_ra"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #3.3.3
+            {'_id': "3.2.3", 'description': "Ensure /etc/hosts.deny is configured", 'function': None, 'kwargs': {'flags': ["net.ipv6.conf.all.accept_ra", "net.ipv6.conf.default.accept_ra"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #3.3.4
+            {'_id': "3.2.4", 'description': "Ensure permissions on /etc/hosts.allow are configured", 'function': None, 'kwargs': {'flags': ["net.ipv6.conf.all.accept_ra", "net.ipv6.conf.default.accept_ra"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
+            
             #3.3.5
+            {'_id': "3.2.5", 'description': "Ensure permissions on /etc/hosts.deny are configured", 'function': None, 'kwargs': {'flags': ["net.ipv6.conf.all.accept_ra", "net.ipv6.conf.default.accept_ra"], 'value': 0}, 'levels': {'server': 1, 'workstation': 1}},
 
             {'_id': "3.4", 'description': "Uncommon Network Protocols", 'type': "header"},
             {'_id': "3.4.1", 'description': "Ensure DCCP is disabled", 'function': LinuxIndependentAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'dccp'}, 'levels': {'server': 2, 'workstation': 2}},
             {'_id': "3.4.2", 'description': "Ensure SCTP is disabled", 'function': LinuxIndependentAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'sctp'}, 'levels': {'server': 2, 'workstation': 2}},
             # these to ids need to create custom modules audit_kernel_module_is_disabled
-            # {'_id': "3.4.3", 'description': "Ensure RDS is disabled", 'function': LinuxIndependentAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'rds'}, 'levels': {'server': 2, 'workstation': 2}},
-            # {'_id': "3.4.4", 'description': "Ensure TIPC is disabled", 'function': LinuxIndependentAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'tipc'}, 'levels': {'server': 2, 'workstation': 2}},
+            #{'_id': "3.4.3", 'description': "Ensure RDS is disabled", 'function': LinuxIndependentAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'rds'}, 'levels': {'server': 2, 'workstation': 2}},
+            #{'_id': "3.4.4", 'description': "Ensure TIPC is disabled", 'function': LinuxIndependentAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'tipc'}, 'levels': {'server': 2, 'workstation': 2}},
             
             {'_id': "3.5", 'description': "Firewall Configuration", 'type': "header"},
             {'_id': "3.5.1", 'description': "Configure IPv6 ip6tables", 'type': "header"},
@@ -474,6 +526,8 @@ benchmarks = {
             {'_id': "3.5.2.4", 'description': "Ensure iptables rules exist for all open ports", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
             
             #3.5.3
+            {'_id': "3.5.3", 'description': "Ensure iptables is installed", 'function': None, 'kwargs': {'ip_version': 'ipv4'}, 'levels': {'server': 1, 'workstation': 1}},
+
             {'_id': "3.6", 'description': "Ensure wireless interfaces are disabled", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'wireless-tools'}, 'levels': {'server': 1, 'workstation': 2}},            
             {'_id': "3.7", 'description': "Disable IPv6(Not Scored)", 'function': LinuxIndependentAudit.audit_sysctl_flags_are_set, 'kwargs': {'flags': ["net.ipv6.conf.all.disaable_ipv6", "net.ipv6.conf.default.disable_ipv6"], 'value': 1}, 'levels': {'server': 1, 'workstation': 1}},
 
@@ -496,10 +550,10 @@ benchmarks = {
             {'_id': "4.1.10", 'description': "Ensure session initiation information is collected", 'function': LinuxIndependentAudit.audit_events_for_discretionary_access_control_changes_are_collected, 'levels': {'server': 2, 'workstation': 2}},
             {'_id': "4.1.11", 'description': "Ensure discretionary access control permissions modification events are collected", 'function': LinuxIndependentAudit.audit_events_for_discretionary_access_control_changes_are_collected, 'levels': {'server': 2, 'workstation': 2}},
             {'_id': "4.1.12", 'description': "Ensure unsuccessful unauthorized file access attempts are collected", 'function': LinuxIndependentAudit.audit_events_for_unsuccessful_file_access_attempts_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            #4.1.13
+            {'_id': "4.1.13", 'description': "Ensure use of privileged commands is collected", 'function': None, 'levels': {'server': 2, 'workstation': 2}},
             {'_id': "4.1.14", 'description': "Ensure successful file system mounts are collected", 'function': LinuxIndependentAudit.audit_events_for_successful_file_system_mounts_are_collected, 'levels': {'server': 2, 'workstation': 2}},
             {'_id': "4.1.15", 'description': "Ensure file deletion events by users are collected", 'function': LinuxIndependentAudit.audit_events_for_file_deletion_by_users_are_collected, 'levels': {'server': 2, 'workstation': 2}},
-            #4.1.16
+            {'_id': "4.1.16", 'description': "Ensure changes to system administration scope (sudoers) is collected", 'function': Centos7Audit.audit_events_for_changes_to_sysadmin_scope_are_collected, 'levels': {'server': 2, 'workstation': 2}},
             {'_id': "4.1.17", 'description': "Ensure system administrator command executions (sudo)are collected", 'function': LinuxIndependentAudit.audit_events_for_system_administrator_commands_are_collected, 'levels': {'server': 2, 'workstation': 2}},
             {'_id': "4.1.18", 'description': "Ensure kernel module loading and unloading is collected", 'function': LinuxIndependentAudit.audit_events_for_kernel_module_loading_and_unloading_are_collected, 'levels': {'server': 2, 'workstation': 2}},
             {'_id': "4.1.19", 'description': "Ensure the audit configuration is immutable", 'function': LinuxIndependentAudit.audit_audit_config_is_immutable, 'levels': {'server': 2, 'workstation': 2}},
@@ -574,8 +628,14 @@ benchmarks = {
             {'_id': "5.4.1.5", 'description': "Ensure all users last password change date is in the past", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "5.4.2", 'description': "Ensure system accounts are secured", 'function': LinuxIndependentAudit.audit_system_accounts_are_secured, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "5.4.3", 'description': "Ensure default group for the root account is GID 0", 'function': LinuxIndependentAudit.audit_default_group_for_root, 'levels': {'server': 1, 'workstation': 1}},
+            
             #5.4.4
+            {'_id': "5.4.4", 'description': "Ensure default user umask is 027 or more restrictive", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            
             #5.4.5
+            {'_id': "5.4.5", 'description': "Ensure default user shell timeout is 900 seconds or less", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            
+            
             {'_id': "5.5", 'description': "Ensure root login is restricted to system console", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
             {'_id': "5.6", 'description': "Ensure access to the su command is restricted", 'function': LinuxIndependentAudit.audit_access_to_su_command_is_restricted, 'levels': {'server': 1, 'workstation': 1}},
 
@@ -584,13 +644,13 @@ benchmarks = {
             {'_id': "6.1", 'description': "System File Permissions", 'type': "header"},
             {'_id': "6.1.1", 'description': "Audit system file permissions", 'levels': {'server': 2, 'workstation': 2}, 'type': "manual"},
             {'_id': "6.1.2", 'description': "Ensure permissions on /etc/passwd are configured", 'function': LinuxIndependentAudit.audit_file_permissions, 'kwargs': {'file': "/etc/passwd", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0644"}, 'levels': {'server': 1, 'workstation': 1}},
-            #6.1.3
-            #6.1.4
-            #6.1.5
-            #6.1.6
-            #6.1.7
-            #6.1.8
-            #6.1.9
+            {'_id': "6.1.3", 'description': "Ensure permissions on /etc/shadow are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/shadow", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0000"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.1.4", 'description': "Ensure permissions on /etc/group are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/group", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0644"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.1.5", 'description': "Ensure permissions on /etc/gshadow are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/gshadow", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0000"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.1.6", 'description': "Ensure permissions on /etc/passwd- are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/passwd-", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0644"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.1.7", 'description': "Ensure permissions on /etc/shadow- are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/shadow-", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0000"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.1.8", 'description': "Ensure permissions on /etc/group- are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/group-", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0644"}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "6.1.9", 'description': "Ensure permissions on /etc/gshadow- are configured", 'function': Centos7Audit.audit_file_permissions, 'kwargs': {'file': "/etc/gshadow-", 'expected_user': "root", 'expected_group': "root", 'expected_mode': "0000"}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "6.1.10", 'description': "Ensure no world writable files exist", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "6.1.11", 'description': "Ensure no unowned files or directories exist", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "6.1.12", 'description': "Ensure no ungrouped files or directories exist", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
@@ -599,9 +659,17 @@ benchmarks = {
 
             {'_id': "6.2", 'description': "User and Group Settings", 'type': "header"},
             {'_id': "6.2.1", 'description': "Ensure password fields are not empty", 'function': LinuxIndependentAudit.audit_etc_passwd_accounts_use_shadowed_passwords, 'levels': {'server': 1, 'workstation': 1}},
+            
             #6.2.2
+            {'_id': "6.2.2", 'description': "Ensure no legacy '+' entries exist in /etc/passwd", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            
             #6.2.3
+            {'_id': "6.2.3", 'description': "Ensure no legacy '+' entries exist in /etc/shadow", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            
             #6.2.4
+            {'_id': "6.2.4", 'description': "Ensure no legacy '+' entries exist in /etc/group", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            
+
             {'_id': "6.2.5", 'description': "Ensure root is the only UID 0 account", 'function': LinuxIndependentAudit.audit_root_is_only_uid_0_account, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "6.2.6", 'description': "Ensure root PATH integrity", 'levels': {'server': 1, 'workstation': 1}, 'type': "manual"},
             {'_id': "6.2.7", 'description': "Ensure all users' home directories exist", 'function': LinuxIndependentAudit.audit_homedirs_exist, 'levels': {'server': 1, 'workstation': 1}},
@@ -610,7 +678,11 @@ benchmarks = {
             {'_id': "6.2.10", 'description': "Ensure users' dot files are not group or world writable", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "6.2.11", 'description': "Ensure no users have .forward files", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "6.2.12", 'description': "Ensure no users have .netrc files", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+            
             #6.2.13
+            {'_id': "6.2.13", 'description': "Ensure users' .netrc Files are not group or world accessible", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
+
+
             {'_id': "6.2.14", 'description': "Ensure no users have .rhosts files", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "6.2.15", 'description': "Ensure all groups in /etc/passwd exist in /etc/group", 'function': LinuxIndependentAudit.audit_etc_passwd_gids_exist_in_etc_group, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "6.2.16", 'description': "Ensure no duplicate UIDs exist", 'function': LinuxIndependentAudit.audit_duplicate_uids, 'levels': {'server': 1, 'workstation': 1}},

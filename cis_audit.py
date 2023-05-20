@@ -1859,6 +1859,43 @@ class LinuxIndependentAudit(CISAudit):
 
         return state
 
+    def audit_selinux_state_is_enforcing(self) -> int:
+        state = 0
+
+        cmd = R"sestatus | awk -F: '/^Current mode:/ {print $2}' | sed 's/\s*//'"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "enforcing":
+            state += 1
+
+        cmd = R"sestatus | awk -F: '/^Mode from config file:/ {print $2}' | sed 's/\s*//'"
+        r = self._shellexec(cmd)
+        if r.stdout[0] != "enforcing":
+            state += 2
+
+        return state
+    
+    def audit_events_for_changes_to_sysadmin_scope_are_collected(self) -> int:
+        state = 0
+        cmd1 = R"grep -h scope /etc/audit/rules.d/*.rules"
+        cmd2 = R"auditctl -l | grep scope"
+
+        expected_output = [
+            '-w /etc/sudoers -p wa -k scope',
+            '-w /etc/sudoers.d -p wa -k scope',
+        ]
+
+        r1 = self._shellexec(cmd1)
+        r2 = self._shellexec(cmd2)
+
+        if r1.stdout != expected_output:
+            state += 1
+
+        if r2.stdout != expected_output:
+            state += 2
+
+        return state
+
+    
     #need to check these functions
     
     #doesn't exist in benchmark
@@ -1876,25 +1913,6 @@ class LinuxIndependentAudit(CISAudit):
             state += 2
 
         return state
-    
-    
-    #different description
-    def audit_selinux_mode_is_enforcing(self) -> int:
-        state = 0
-
-        cmd = R"sestatus | awk -F: '/^Current mode:/ {print $2}' | sed 's/\s*//'"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "enforcing":
-            state += 1
-
-        cmd = R"sestatus | awk -F: '/^Mode from config file:/ {print $2}' | sed 's/\s*//'"
-        r = self._shellexec(cmd)
-        if r.stdout[0] != "enforcing":
-            state += 2
-
-        return state
-    
-    
     #different description
     def audit_no_unconfined_services(self) -> int:
         state = 0
@@ -1907,6 +1925,20 @@ class LinuxIndependentAudit(CISAudit):
 
         return state
     
+    #new ones just created
+    def audit_interactive_boot_not_enabled(self) -> int:
+        state = 0
+        grep_output = self._shellexec('grep "^PROMPT_FOR_CONFIRM=" /etc/sysconfig/boot', shell=True, capture_output=True, text=True)
+
+        if grep_output.returncode == 0:
+            prompt_for_confirm = grep_output.stdout.strip().split('=')[1].strip('"')
+            if prompt_for_confirm == 'no':
+                pass
+            else:
+                state = 1
+        else:
+            state = 2
+        return state
 
 class Centos7Audit(LinuxIndependentAudit):
     def __init__(self, config=None):
@@ -2062,27 +2094,6 @@ class Centos7Audit(LinuxIndependentAudit):
 
         if r.stdout[0] != '':
             state += 1
-
-        return state
-
-    def audit_events_for_changes_to_sysadmin_scope_are_collected(self) -> int:
-        state = 0
-        cmd1 = R"grep -h scope /etc/audit/rules.d/*.rules"
-        cmd2 = R"auditctl -l | grep scope"
-
-        expected_output = [
-            '-w /etc/sudoers -p wa -k scope',
-            '-w /etc/sudoers.d -p wa -k scope',
-        ]
-
-        r1 = self._shellexec(cmd1)
-        r2 = self._shellexec(cmd2)
-
-        if r1.stdout != expected_output:
-            state += 1
-
-        if r2.stdout != expected_output:
-            state += 2
 
         return state
 
