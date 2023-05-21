@@ -1928,7 +1928,7 @@ class LinuxIndependentAudit(CISAudit):
     #new ones just created
     def audit_interactive_boot_not_enabled(self) -> int:
         state = 0
-        grep_output = self._shellexec('grep "^PROMPT_FOR_CONFIRM=" /etc/sysconfig/boot', shell=True, capture_output=True, text=True)
+        grep_output = self._shellexec('grep "^PROMPT_FOR_CONFIRM=" /etc/sysconfig/boot')
 
         if grep_output.returncode == 0:
             prompt_for_confirm = grep_output.stdout.strip().split('=')[1].strip('"')
@@ -1937,6 +1937,121 @@ class LinuxIndependentAudit(CISAudit):
             else:
                 state = 1
         else:
+            state = 2
+        return state
+    
+    def check_grub_version(self):
+        grub_directory = '/boot/grub'
+
+        if os.path.exists(grub_directory):
+            if os.path.exists(os.path.join(grub_directory, 'grub.cfg')):
+                return "GRUB2"
+            elif os.path.exists(os.path.join(grub_directory, 'menu.lst')):
+                return "GRUB"
+
+    def audit_apparmor_is_not_disabled(self) -> int:
+        
+        state = 0
+
+        if self.check_grub_version() == "GRUB":
+
+            grep_output = self._shellexec('grep "^\s*kernel" /boot/grub/menu.lst')
+
+            if grep_output.returncode == 0:
+                kernel_lines = grep_output.stdout.strip().split('\n')
+                apparmor_present = False
+
+                for line in kernel_lines:
+                    if 'apparmor=0' in line:
+                        apparmor_present = True
+                        break
+
+                if apparmor_present:
+                    state = 1
+                else:
+                    state = 0
+            else:
+                state = 2
+
+        else:
+            grep_output = self._shellexec('grep "^\s*linux" /boot/grub/grub.cfg')
+
+            if grep_output.returncode == 0:
+                linux_lines = grep_output.stdout.strip().split('\n')
+                apparmor_present = False
+
+                for line in linux_lines:
+                    if 'apparmor=0' in line:
+                        apparmor_present = True
+                        break
+
+                if apparmor_present:
+                    state = 1
+                else:
+                    state = 0
+            else:
+                state = 2
+
+        return state
+
+    def audit_apparmor_profiles_are_enforcing(self):
+        apparmor_output = self._shellexec('apparmor_status')
+        if apparmor_output.returncode == 0:
+            linux_lines = apparmor_output.stdout.strip().split('\n')
+
+            complainMode = False
+            confinedMode = False
+
+            for line in linux_lines:
+                if "0 processes are in complain mode." in line:
+                    complainMode = True
+                elif "0 processes are unconfined" in line:
+                    confinedMode = True
+
+            if complainMode and confinedMode:
+                state = 0
+            else:
+                state = 1
+        else:
+            state = 2
+        
+        return state
+
+    import subprocess
+
+    def get_package_management_system(self):
+        package_managers = {
+            'rpm': ['rpm'],
+            'dpkg': ['dpkg']
+        }
+
+        for manager, commands in package_managers.items():
+            for command in commands:
+                try:
+                    self._shellexec(command)
+                    return manager
+                except FileNotFoundError:
+                    pass
+
+        return None
+
+    def audit_x_windows_not_installed(self):
+        package_management = self.get_package_management_system()
+
+        if package_management == 'rpm':
+            command = 'rpm -qa xorg-x11*'
+        elif package_management == 'dpkg':
+            command = 'dpkg -l xserver-xorg*'
+        else:
+            return 2
+
+        try:
+            output = self._shellexec(command)
+            if output.returncode == 0 and not output.stdout:
+                state = 0
+            else:
+                state = 1
+        except FileNotFoundError:
             state = 2
         return state
 

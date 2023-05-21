@@ -312,6 +312,7 @@ benchmarks = {
             {'_id': "1.1.1", 'description': "Disable unused filesystems", 'type': "header"},
             {'_id': "1.1.1.1", 'description': "Ensure mounting of cramfs is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'cramfs'}, 'levels': {'server': 1, 'workstation': 1}},
             
+            #kind of done
             #1.1.1.2
             {'_id': "1.1.1.2", 'description': "Ensure mounting of freevxfs filesystems is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'freevxfs'}, 'levels': {'server': 1, 'workstation': 1}},
             
@@ -328,7 +329,7 @@ benchmarks = {
             {'_id': "1.1.1.7", 'description': "Ensure mounting of udf is disabled", 'function': Centos7Audit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'udf'}, 'levels': {'server': 1, 'workstation': 1}},
             
             #1.1.1.8
-            {'_id': "1.1.1.8", 'description': "Ensure mounting of FAT filesystems is limited", 'function': None, 'kwargs': {'module': 'vfat'}, 'levels': {'server': 1, 'workstation': 1}},
+            {'_id': "1.1.1.8", 'description': "Ensure mounting of FAT filesystems is limited", 'function': LinuxIndependentAudit.audit_kernel_module_is_disabled, 'kwargs': {'module': 'vfat'}, 'levels': {'server': 1, 'workstation': 1}},
 
             {'_id': "1.1.2", 'description': 'Ensure /tmp is configured', 'function': LinuxIndependentAudit.audit_partition_is_separate, 'kwargs': {'partition': '/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.1.3", 'description': 'Ensure nodev option set on /tmp partition', 'function': LinuxIndependentAudit.audit_partition_option_is_set, 'kwargs': {'option': 'nodev', 'partition': '/tmp'}, 'levels': {'server': 1, 'workstation': 1}},
@@ -385,11 +386,11 @@ benchmarks = {
             #different description{'_id': "1.6.2.6", 'description': "Ensure no unconfined services exist", 'function': LinuxIndependentAudit.audit_no_unconfined_services, 'levels': {'server': 1, 'workstation': 1}},
             {'_id': "1.6.3", 'description': "Configure AppArmor", 'type': "header"},
             
-            #1.6.3.1
-            {'_id': "1.6.3.1", 'description': 'Ensure AppArmor is not disabled in bootloader configuration', 'function': None, 'kwargs': {'package': 'mcstrans'}, 'levels': {'server': 1, 'workstation': 1}},
+            #1.6.3.1 kind of done
+            {'_id': "1.6.3.1", 'description': 'Ensure AppArmor is not disabled in bootloader configuration', 'function': LinuxIndependentAudit.audit_apparmor_is_not_disabled, 'levels': {'server': 1, 'workstation': 1}},
             
-            #1.6.3.2
-            {'_id': "1.6.3.2", 'description': 'Ensure all AppArmor Profiles are enforcing', 'function': None, 'kwargs': {'package': 'mcstrans'}, 'levels': {'server': 1, 'workstation': 1}},
+            #1.6.3.2 kind of done
+            {'_id': "1.6.3.2", 'description': 'Ensure all AppArmor Profiles are enforcing', 'function': LinuxIndependentAudit.audit_apparmor_profiles_are_enforcing, 'levels': {'server': 1, 'workstation': 1}},
             
             {'_id': "1.7", 'description': "Command Line Warning Banners", 'type': "header"},
             {'_id': "1.7.1.1", 'description': "Ensure message of the day is configured properly", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
@@ -443,8 +444,8 @@ benchmarks = {
             {'_id': "2.2.1.4", 'description': "Ensure systemd-timesyncd is configured", 'function': None, 'levels': {'server': 1, 'workstation': 1}},
 
             
-            #2.2.2
-            {'_id': "2.2.2", 'description': "Ensure X Window Server is not installed", 'function': None, 'kwargs': {'package': 'avahi*'}, 'levels': {'server': 1, 'workstation': 2}},
+            #2.2.2 kind of done
+            {'_id': "2.2.2", 'description': "Ensure X Window Server is not installed", 'function': LinuxIndependentAudit.audit_x_windows_not_installed, 'levels': {'server': 1, 'workstation': 2}},
 
             {'_id': "2.2.3", 'description': "Ensure Avahi Server is not installed", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'avahi*'}, 'levels': {'server': 1, 'workstation': 2}},
             {'_id': "2.2.4", 'description': "Ensure CUPS is not installed", 'function': LinuxIndependentAudit.audit_package_not_installed, 'kwargs': {'package': 'cups'}, 'levels': {'server': 1, 'workstation': None}},
