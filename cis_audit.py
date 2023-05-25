@@ -2017,8 +2017,6 @@ class LinuxIndependentAudit(CISAudit):
         
         return state
 
-    import subprocess
-
     def get_package_management_system(self):
         package_managers = {
             'rpm': ['rpm'],
@@ -2053,6 +2051,70 @@ class LinuxIndependentAudit(CISAudit):
                 state = 1
         except FileNotFoundError:
             state = 2
+        return state
+
+    def check_module_installed(self, package):
+        package_management = self.get_package_management_system()
+
+        if package_management == 'rpm':
+            if package == "libselinux":
+                command = f'rpm -q'
+            command = f'rpm -q {package}'
+        elif package_management == 'dpkg':
+            if package == "tcp_wrappers":
+                command = f'dpkg -s tcpd'
+            elif package == "audit audit-libs":
+                command = f'dpkg -s auditd audispd-plugins'
+            elif package == "libselinux":
+                command = f'dpkg -s'
+            command = f'dpkg -s {package}'
+        else:
+            return 2
+
+        try:
+            if command == 'dpkg -s':
+                check = 1
+                output1 = subprocess.run("dpkg -s libselinux1", shell=True, capture_output=True, text=True)
+                output2 = subprocess.run("dpkg -s apparmor", shell=True, capture_output=True, text=True)       
+            
+            elif command == "rpm -q":
+                check = 1
+                output1 = subprocess.run("rpm -q libselinux", shell=True, capture_output=True, text=True)
+                output2 = subprocess.run("rpm -q apparmor", shell=True, capture_output=True, text=True)       
+            else:   
+                check = 0
+                output = subprocess.run(command, shell=True, capture_output=True, text=True)
+            if check == 0:
+                if output.returncode == 0:                    
+                    return 0
+                else:
+                    return 1
+            else:
+                if output1.returncode == 0 or output2.returncode == 0:                    
+                    return 0
+                else:
+                    return 1
+        except FileNotFoundError:
+            return 2
+
+    def run_module_audit(package):
+        state = 0
+
+        grep_command = f'grep -R "^{package}" /etc/inetd.*'
+        module_output = subprocess.run(grep_command, shell=True, capture_output=True, text=True)
+
+        if module_output.returncode == 0 and not module_output.stdout:
+            xinetd_conf_command = f'grep "disable = yes" /etc/xinetd.conf'
+            xinetd_d_command = f'grep "disable = yes" /etc/xinetd.d/*'
+            xinetd_conf_output = subprocess.run(xinetd_conf_command, shell=True, capture_output=True, text=True)
+            xinetd_d_output = subprocess.run(xinetd_d_command, shell=True, capture_output=True, text=True)
+
+            if xinetd_conf_output.returncode == 0 and not xinetd_conf_output.stdout and \
+            xinetd_d_output.returncode == 0 and not xinetd_d_output.stdout:
+                print(f"{package} service is not enabled.")
+                state = 0
+        else:
+            state = 1
         return state
 
 class Centos7Audit(LinuxIndependentAudit):
