@@ -1,26 +1,4 @@
 # CIS Benchmarks Audit
-<p>
-  <a href="https://github.com/finalduty/cis-benchmarks-audit/tags">
-    <img alt="Latest version" src="https://img.shields.io/github/v/tag/finalduty/cis-benchmarks-audit?include_prereleases&label=latest&logo=python">
-  </a>
-  <a href="https://github.com/finalduty/cis-benchmarks-audit/actions/workflows/ci-tests.yaml">
-    <img alt="GitHub Actions" src="https://github.com/finalduty/cis-benchmarks-audit/actions/workflows/ci-tests.yaml/badge.svg">
-  </a>
-
-  <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
-    <img alt="License" src="https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg">
-  </a>
-  <a href="https://codecov.io/gh/finalduty/cis-benchmarks-audit">
-    <img src="https://codecov.io/gh/finalduty/cis-benchmarks-audit/branch/main/graph/badge.svg?token=BAFVN48B40"/>
-  </a>
-  <a href="https://www.codefactor.io/repository/github/finalduty/cis-benchmarks-audit/badge">
-    <img alt="CodeFactor" src="https://www.codefactor.io/repository/github/finalduty/cis-benchmarks-audit/badge">
-  </a>
-  <a href="https://github.com/psf/black">
-    <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
-  </a>
-</p>
-
 This repo provides an unofficial, standalone, zero-install, zero-dependency, Python 3 script which can check your system against published CIS Hardening Benchmarks to offer an indication of your system's preparedness for compliance to the official standard.
 
 
@@ -128,12 +106,6 @@ OS|Benchmark Versions|Python Version
 CentOS 7|3.1.2|3.6
 DistributionIndependentLinux|2.0.0|3.6
 
-
-### Caveats
-#### Terms of Use
-Use of the CIS Benchmarks are subject to the [Terms of Use for Non-Member CIS Products](https://www.cisecurity.org/terms-of-use-for-non-member-cis-products)
-
-
 #### Python 3
 ##### CentOS 7
 Whilst this repo intends to follow a zero dependency approach, it is not practical to support Python 2.7, which is what is installed by default on CentOS 7. You can however easily install Python 3.6 via yum, which I hope is ok for your environment:
@@ -156,17 +128,3 @@ $sudo pacman -S python
 ```
 $ sudo zypper install python3
 ```
-
-### Disclaimer
-This is not a replacement for a full audit and a passing result from this script does not necessarily mean that you are compliant (but it should give you a good idea of where to start).  
-
-_No warranty is offered and no responsibility will be taken for damage to systems resulting from the use of this tool._
-
-### License
-This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
-
-[![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
-
-[cc-by-nc-sa]: http://creativecommons.org/licenses/by-nc-sa/4.0/
-[cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
-[cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
